@@ -1,0 +1,7 @@
+Welcome to {{ COMPANY_NAME }}{% if shop %} ({{ shop.name }}){% endif %}.
+
+Sign in as: {{ user.email }}
+Temporary password: {{ password }}
+{% if login_url %}Sign in at: {{ login_url }}{% endif %}
+
+You will be asked to choose your own password at first sign-in.

@@ -1,0 +1,36 @@
+{% load static nyota %}<!doctype html>
+<html lang="en" data-theme="{{ ui_theme }}" data-accent="{{ ui_accent }}" data-bs-theme="{% if ui_dark %}dark{% else %}light{% endif %}" data-ui="{% if ui_dark %}dark{% else %}light{% endif %}"{% if ui_authed %} data-authed{% endif %}>
+<head>
+  <meta charset="utf-8">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ COMPANY_NAME }}{% endblock %} · Nyota</title>
+  <meta name="description" content="{% block description %}Nyota is a marketplace of independent shops. Browse, chat with sellers and track every order.{% endblock %}">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M32 4l7 20 21 1-17 13 6 21-17-12-17 12 6-21L4 25l21-1z' fill='%238b5cf6'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;700&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css">
+  <link rel="stylesheet" href="{% static 'css/base.css' %}">
+  {% block css %}<link rel="stylesheet" href="{% static 'css/public.css' %}">{% endblock %}
+  {% block extra_head %}{% endblock %}
+  <script>window.NYOTA_CUR="{{ CURRENCY }}";window.NYOTA_DARK={ {% for t in THEMES %}"{{ t.0 }}":{{ t.2|yesno:"true,false" }}{% if not forloop.last %},{% endif %}{% endfor %} };
+/* Theme: the choice saved on THIS device wins; otherwise the account's choice; otherwise follow the device (light/dark). */
+window.NYOTA_RESOLVE=function(p){if(!p||p==='auto'||!(p in window.NYOTA_DARK)){var d=false;try{d=matchMedia('(prefers-color-scheme: dark)').matches}catch(e){}return d?'midnight':'dawn'}return p};
+(function(){var d=document.documentElement,p=d.getAttribute('data-theme'),a=d.getAttribute('data-accent');try{p=localStorage.getItem('ny_theme')||p;a=localStorage.getItem('ny_accent')||a}catch(e){}
+d.setAttribute('data-pref',p||'auto');var r=NYOTA_RESOLVE(p),k=NYOTA_DARK[r]!==false?'dark':'light';d.setAttribute('data-theme',r);d.setAttribute('data-accent',a||'violet');d.setAttribute('data-bs-theme',k);d.setAttribute('data-ui',k)})();</script>
+</head>
+<body class="{% block body_class %}{% endblock %}">
+<canvas class="starfield" aria-hidden="true" style="position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none"></canvas>
+<a href="#main" class="visually-hidden-focusable">Skip to content</a>
+{% block chrome_top %}{% include 'partials/header.html' %}{% endblock %}
+<div id="toasts" class="ny-toasts" aria-live="polite">
+  {% for m in messages %}<span data-toast="{{ m }}" data-kind="{% if m.tags == 'error' %}error{% elif m.tags == 'warning' %}warning{% elif m.tags == 'success' %}success{% else %}info{% endif %}"></span>{% endfor %}
+</div>
+<main id="main" style="position:relative;z-index:2">{% block content %}{% endblock %}</main>
+{% block chrome_bottom %}{% include 'partials/footer.html' %}{% endblock %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script src="{% static 'js/stars.js' %}"></script>
+<script src="{% static 'js/app.js' %}"></script>
+{% block js %}{% endblock %}
+</body>
+</html>

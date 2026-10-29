@@ -1,0 +1,2 @@
+{% extends 'base.html' %}{% load nyota %}{% block title %}Lost in space{% endblock %}
+{% block content %}<div class="ny-container empty" style="padding:7rem 1rem"><div style="font-family:var(--font-display);font-size:7rem;font-weight:800;background:linear-gradient(120deg,var(--accent),var(--accent-2));-webkit-background-clip:text;color:transparent">404</div><h2>This star has drifted away</h2><p>The page you wanted is not here.</p><a class="btn btn-ny" href="{% url 'core:home' %}">Take me home</a></div>{% endblock %}

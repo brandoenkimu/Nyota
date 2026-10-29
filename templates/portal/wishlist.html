@@ -1,0 +1,3 @@
+{% extends 'portal/base.html' %}{% load nyota %}
+{% block portal %}{% if items %}<div class="pgrid">{% for i in items %}{% with p=i.product %}{% include 'partials/product_card.html' %}{% endwith %}{% endfor %}</div>
+{% else %}<div class="empty">{% icon 'heart' %}<h3>Nothing saved yet</h3><p>Tap the heart on any product to keep it here.</p><a class="btn btn-ny" href="{% url 'core:products' %}">Browse products</a></div>{% endif %}{% endblock %}

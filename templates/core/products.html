@@ -1,0 +1,28 @@
+{% extends 'base.html' %}{% load nyota %}
+{% block title %}{% if q %}Search: {{ q }}{% else %}All products{% endif %}{% endblock %}
+{% block content %}<div class="ny-container page-head">
+  <span class="sec-kicker">Catalogue</span><h1>{% if q %}Results for "{{ q }}"{% else %}Everything on Nyota{% endif %}</h1>
+  <div class="row g-4 mt-1">
+    <aside class="col-lg-3"><form class="filters glass" method="get">
+      <input type="hidden" name="q" value="{{ q }}">
+      <h4 class="mt-0">Category</h4>
+      <a class="opt {% if not current_category %}on{% endif %}" href="?{% qs_replace category='' page='' %}">All</a>
+      {% for c in categories %}<a class="opt {% if current_category == c.slug %}on{% endif %}" href="?{% qs_replace category=c.slug page='' %}">{{ c.name }}</a>{% endfor %}
+      <h4>Price ({{ CURRENCY }})</h4>
+      <div class="d-flex gap-2"><input class="form-control" name="min" placeholder="Min" value="{{ request.GET.min }}"><input class="form-control" name="max" placeholder="Max" value="{{ request.GET.max }}"></div>
+      <div class="form-check mt-3"><input class="form-check-input" type="checkbox" name="instock" id="is" value="1" {% if request.GET.instock %}checked{% endif %}><label class="form-check-label" for="is">In stock only</label></div>
+      <div class="form-check"><input class="form-check-input" type="checkbox" name="sale" id="sl" value="1" {% if request.GET.sale %}checked{% endif %}><label class="form-check-label" for="sl">On sale</label></div>
+      <input type="hidden" name="category" value="{{ current_category }}"><input type="hidden" name="sort" value="{{ current_sort }}">
+      <button class="btn btn-ny w-100 mt-3">Apply</button>
+    </form></aside>
+    <div class="col-lg-9">
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2"><span class="text-muted">{{ page.paginator.count }} product{{ page.paginator.count|pluralize }}</span>
+        <div class="d-flex gap-2 align-items-center"><span class="text-muted small">Sort</span>
+          <select class="form-select form-select-sm" style="width:auto" onchange="location='?'+new URLSearchParams({...Object.fromEntries(new URLSearchParams(location.search)),sort:this.value,page:1})">
+            <option value="">Recommended</option>{% for k, v in sorts.items %}<option value="{{ k }}" {% if current_sort == k %}selected{% endif %}>{{ v.1 }}</option>{% endfor %}
+          </select></div></div>
+      {% if products %}<div class="pgrid">{% for p in products %}{% include 'partials/product_card.html' %}{% endfor %}</div>{% include 'partials/pager.html' %}
+      {% else %}<div class="empty">{% icon 'search' %}<h3>Nothing matched</h3><p>Try fewer filters or a different word.</p><a class="btn btn-ghost" href="{% url 'core:products' %}">Clear filters</a></div>{% endif %}
+    </div>
+  </div>
+</div>{% endblock %}

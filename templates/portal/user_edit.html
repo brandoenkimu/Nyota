@@ -1,0 +1,4 @@
+{% extends 'portal/base.html' %}{% load nyota %}
+{% block portal %}<div class="pcardx" style="max-width:640px"><dl class="small"><dt class="text-muted">Email</dt><dd>{{ target.email }}</dd><dt class="text-muted">Username</dt><dd>{{ target.username }}</dd><dt class="text-muted">Role</dt><dd>{{ target.get_role_display }}</dd><dt class="text-muted">Joined</dt><dd>{{ target.date_joined|date:"d M Y" }}</dd></dl>
+<form method="post" novalidate>{% csrf_token %}{% include 'partials/form_fields.html' %}<div class="d-flex gap-2"><button class="btn btn-ny">Save</button><a class="btn btn-ghost" href="{% url 'portals:admin_users' %}">Back</a></div></form>
+<hr style="border-color:var(--line)"><form method="post" action="{% url 'portals:admin_user_reset' target.pk %}">{% csrf_token %}<button class="btn btn-soft btn-sm" data-confirm="Generate a new temporary password for this user?">{% icon 'key' %} Reset password</button></form></div>{% endblock %}

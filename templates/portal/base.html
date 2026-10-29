@@ -1,0 +1,40 @@
+{% extends 'base.html' %}{% load static nyota %}
+{% block title %}{{ page_title|default:portal_name }}{% endblock %}
+{% block css %}<link rel="stylesheet" href="{% static 'css/public.css' %}"><link rel="stylesheet" href="{% static 'css/portal.css' %}"><link rel="stylesheet" href="{% static 'css/chat.css' %}">{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">{% endblock %}
+{% block body_class %}portal{% endblock %}
+{% block chrome_top %}{% endblock %}{% block chrome_bottom %}{% endblock %}
+{% block content %}
+<div class="pshell">
+  <aside class="sidebar">
+    <a href="{% url 'core:home' %}" class="brand">{% brand_logo 'full' %}</a>
+    <div class="role-pill">{{ portal_name }}{% if my_shop %} · {{ my_shop.name|truncatechars:18 }}{% endif %}</div>
+    <nav class="snav">
+      {% for it in nav %}<a href="{{ it.href }}" class="{% if it.active %}on{% endif %}">{% icon it.icon %}<span>{{ it.label }}</span>{% if it.icon == 'chat' and unread_notifications %}{% endif %}</a>{% endfor %}
+      <div class="grp">Quick links</div>
+      <a href="{% url 'core:home' %}">{% icon 'globe' %}<span>Visit the marketplace</span></a>
+      {% if my_shop %}<a href="{{ my_shop.get_absolute_url }}" target="_blank">{% icon 'store' %}<span>My public shop</span></a>{% endif %}
+    </nav>
+    <div class="sidebar-foot">
+      <div class="d-flex align-items-center gap-2 mb-2"><span class="avatar">{{ user.initials }}</span><div style="min-width:0"><b class="d-block text-truncate">{{ user.display_name }}</b><small class="text-muted d-block text-truncate">{{ user.email }}</small></div></div>
+      {% if user.role != 'customer' %}<form method="post" action="{% url 'accounts:clock' %}" class="d-flex gap-1 mb-2">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button name="action" value="in" class="btn btn-soft btn-sm flex-fill">Clock in</button><button name="action" value="out" class="btn btn-ghost btn-sm flex-fill">Clock out</button></form>{% endif %}
+      <form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}<button class="btn btn-ghost btn-sm w-100">{% icon 'logout' %} Sign out</button></form>
+    </div>
+  </aside>
+  <div class="pmain">
+    <header class="ptop">
+      <button class="btn btn-ghost btn-sm side-toggle" aria-label="Menu">{% icon 'menu' %}</button>
+      <h1>{{ page_title }}</h1><span class="sp"></span>
+      <a href="{% url 'core:notifications' %}" class="position-relative" aria-label="Notifications">{% icon 'bell' 22 %}{% if unread_notifications %}<span class="hbadge">{{ unread_notifications }}</span>{% endif %}</a>
+      <div class="dropdown"><button class="btn btn-ghost btn-sm" data-bs-toggle="dropdown" aria-label="Appearance">{% icon 'palette' %}</button>
+        <div class="dropdown-menu dropdown-menu-end ny-menu p-3" style="width:300px"><div class="small text-muted mb-2">Theme</div>
+          <div class="theme-grid mb-3" style="grid-template-columns:repeat(5,1fr)"><button type="button" class="accent-dot" style="width:100%;height:30px;border-radius:10px;background:linear-gradient(135deg,#070b1a 50%,#f6f7fb 50%)" data-set-theme="auto" title="Match my device"></button>{% for t in THEMES %}<button type="button" class="accent-dot" style="width:100%;height:30px;border-radius:10px;background:linear-gradient(135deg,{{ t.3.0 }} 50%,{{ t.3.1 }} 50%)" data-set-theme="{{ t.0 }}" title="{{ t.1 }}"></button>{% endfor %}</div>
+          <div class="small text-muted mb-2">Accent</div><div class="accent-row">{% for a in ACCENTS %}<button type="button" class="accent-dot" style="background:{{ a.1 }}" data-set-accent="{{ a.0 }}" title="{{ a.0|title }}"></button>{% endfor %}</div></div></div>
+    </header>
+    <div class="pbody">
+      {% block portal %}{% endblock %}
+    </div>
+  </div>
+</div>{% endblock %}
+{% block js %}<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="{% static 'js/maps.js' %}"></script><script src="{% static 'js/charts.js' %}"></script>{% block pjs %}{% endblock %}{% endblock %}

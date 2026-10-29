@@ -1,0 +1,9 @@
+{% load nyota %}
+<a href="{{ s.get_absolute_url }}" class="scard reveal" style="--c:{{ s.brand_color }}">
+  <div class="scard-cover">{% shop_logo s %}</div>
+  <div class="scard-body">
+    <h3>{{ s.name }}{% if s.is_verified %} <span class="verified">{% icon 'verified' %}</span>{% endif %}</h3>
+    <div class="text-muted small">{{ s.tagline|default:"Independent seller"|truncatechars:60 }}</div>
+    <div class="scard-meta"><span>{% icon 'star' %} {{ s.rating_avg }}</span>{% if s.city %}<span>{% icon 'map' %} {{ s.city }}</span>{% endif %}{% if s.n is not None %}<span>{% icon 'box' %} {{ s.n }} items</span>{% endif %}</div>
+  </div>
+</a>

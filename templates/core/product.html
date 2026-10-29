@@ -1,0 +1,48 @@
+{% extends 'base.html' %}{% load static nyota %}
+{% block title %}{{ product.name }}{% endblock %}
+{% block description %}{{ product.description|truncatechars:150 }}{% endblock %}
+{% block content %}<div class="ny-container page-head">
+  <nav class="small text-muted mb-3"><a href="{% url 'core:products' %}">Shop</a> / <a href="{% url 'core:products' %}?category={{ product.category.slug }}">{{ product.category.name }}</a> / {{ product.name }}</nav>
+  <div class="row g-4">
+    <div class="col-lg-6" data-gallery>
+      <div class="gal-main">{% product_image product %}</div>
+      {% if gallery %}<div class="gal-thumbs">{% for g in gallery %}<button type="button" data-src="{{ g.image.url }}"><img src="{{ g.image.url }}" alt="{{ g.alt|default:product.name }}"></button>{% endfor %}</div>{% endif %}
+    </div>
+    <div class="col-lg-6"><div class="buybox glass">
+      <a href="{{ product.shop.get_absolute_url }}" class="d-inline-flex align-items-center gap-2 mb-2">{% shop_logo product.shop 'sm' %}<b>{{ product.shop.name }}</b>{% if product.shop.is_verified %}<span class="verified">{% icon 'verified' %}</span>{% endif %}</a>
+      <h1 class="h2">{{ product.name }}</h1>
+      <div class="rating mb-2">{% for s in product.rating_avg|stars %}{% if s == 'empty' %}<span class="empty">★</span>{% else %}★{% endif %}{% endfor %}<small>{{ product.rating_avg }} · {{ product.rating_count }} review{{ product.rating_count|pluralize }}</small></div>
+      <div class="big-price">{{ product.price|kes }} {% if product.discount_percent %}<del class="fs-6 text-muted fw-normal">{{ product.compare_at_price|kes }}</del> <span class="tag">-{{ product.discount_percent }}%</span>{% endif %}</div>
+      <p class="mt-3 text-muted">{{ product.description|truncatechars:240 }}</p>
+      <div class="mb-3">{% if product.in_stock %}<span class="ny-badge ny-badge-ok">In stock{% if product.low_stock %} · only {{ product.stock }} left{% endif %}</span>{% else %}<span class="ny-badge ny-badge-bad">Sold out</span>{% endif %}</div>
+      <form method="post" action="{% url 'orders:cart_add' product.pk %}" data-ajax-cart class="d-flex flex-wrap gap-2 align-items-center">{% csrf_token %}
+        <div class="qty"><button type="button" data-qty="-1">−</button><input name="qty" value="1" max="{{ product.stock }}" inputmode="numeric"><button type="button" data-qty="1">+</button></div>
+        <button class="btn btn-ny" {% if not product.in_stock %}disabled{% endif %}>{% icon 'cart' %} Add to cart</button>
+        <button class="btn btn-ghost" name="buy_now" value="1" {% if not product.in_stock %}disabled{% endif %}>Buy now</button>
+        <button type="button" class="wish {% if in_wishlist %}on{% endif %}" style="position:static;background:var(--raised);color:var(--text)" data-wish="{% url 'core:wishlist_toggle' product.pk %}" aria-label="Wishlist">{% icon 'heart' %}</button>
+      </form>
+      <hr style="border-color:var(--line)">
+      <div class="d-flex flex-wrap gap-3 small text-muted"><span>{% icon 'truck' %} Ships from {{ product.shop.city|default:"the seller" }}</span><span>{% icon 'shield' %} Protected checkout</span>
+        {% if user.is_authenticated and user.role == 'customer' %}<a href="{% url 'chat:start_shop' product.shop.slug %}">{% icon 'chat' %} Chat with the seller</a>{% endif %}</div>
+    </div></div>
+  </div>
+
+  <div data-tabs><div class="ptabs"><button data-tab="t-desc">Details</button><button data-tab="t-rev">Reviews ({{ product.rating_count }})</button><button data-tab="t-ship">Shipping & returns</button></div></div>
+  <div>
+    <div class="tabpane" id="t-desc"><div class="row"><div class="col-lg-8"><p style="white-space:pre-line">{{ product.description|default:"The seller has not added a description yet." }}</p>
+      {% if product.tag_list %}<div>{% for t in product.tag_list %}<span class="perm-chip">{{ t }}</span>{% endfor %}</div>{% endif %}</div>
+      <div class="col-lg-4"><dl class="small">{% if product.brand %}<dt class="text-muted">Brand</dt><dd>{{ product.brand }}</dd>{% endif %}{% if product.sku %}<dt class="text-muted">SKU</dt><dd>{{ product.sku }}</dd>{% endif %}<dt class="text-muted">Category</dt><dd>{{ product.category.name }}</dd></dl></div></div></div>
+    <div class="tabpane" id="t-rev"><div class="row g-4"><div class="col-lg-4">
+      {% for star, n in breakdown %}<div class="d-flex align-items-center gap-2 mb-2"><span style="width:2rem">{{ star }}★</span><div class="bar flex-grow-1"><i style="width:{{ n|pct:product.rating_count }}%"></i></div><small class="text-muted" style="width:2rem">{{ n }}</small></div>{% endfor %}
+      {% if can_review %}<form method="post" action="{% url 'core:review_add' product.pk %}" class="glass p-3 mt-3">{% csrf_token %}<b>Rate this product</b>
+        <div class="starpick my-2">{% for i in '54321' %}<input type="radio" name="rating" id="r{{ i }}" value="{{ i }}"><label for="r{{ i }}">★</label>{% endfor %}</div>
+        <input class="form-control mb-2" name="title" placeholder="Headline"><textarea class="form-control mb-2" name="body" rows="3" placeholder="What did you think?"></textarea><button class="btn btn-ny btn-sm">Post review</button></form>{% endif %}
+    </div><div class="col-lg-8">{% for r in reviews %}<div class="review"><div class="d-flex justify-content-between"><b>{{ r.user.display_name }}</b><small class="text-muted">{{ r.created_at|date:"d M Y" }}</small></div>
+      <div class="rating">{% for i in r.rating|times %}★{% endfor %}</div>{% if r.title %}<b>{{ r.title }}</b>{% endif %}<p class="mb-0">{{ r.body }}</p>
+      {% if r.seller_reply %}<div class="reply"><b>Seller reply</b><br>{{ r.seller_reply }}</div>{% endif %}</div>
+      {% empty %}<div class="empty">{% icon 'star' %}<p>No reviews yet. Delivered orders can be reviewed.</p></div>{% endfor %}</div></div></div>
+    <div class="tabpane" id="t-ship"><p>Shipping from {{ product.shop.name }}: {{ product.shop.shipping_fee|kes }}{% if product.shop.free_shipping_over %}, free over {{ product.shop.free_shipping_over|kes }}{% endif %}.</p><p style="white-space:pre-line">{{ product.shop.return_policy|default:"Contact the seller for returns." }}</p></div>
+  </div>
+
+  {% if related %}<section class="section"><div class="sec-head"><h2>You may also like</h2></div><div class="rail-wrap"><button class="rail-btn prev">{% icon 'chevron-left' %}</button><div class="rail">{% for p in related %}{% include 'partials/product_card.html' %}{% endfor %}</div><button class="rail-btn next">{% icon 'chevron-right' %}</button></div></section>{% endif %}
+</div>{% endblock %}

@@ -1,0 +1,16 @@
+{% extends 'portal/base.html' %}{% load static nyota %}
+{% block portal %}
+<div class="chat {% if active %}has-thread{% endif %}" id="chat-app" {% if active %}data-conv="{{ active.pk }}" data-me="{{ me_id }}" data-moderate="{% if can_moderate %}1{% else %}0{% endif %}"{% endif %}>
+  <div class="chat-list"><div class="head"><b>Conversations</b><span class="d-flex gap-1"><a class="btn btn-ny btn-sm" href="{% url 'chat:new' %}" title="Start a new conversation">{% icon 'plus' %} New</a>{% if user.shop %}<a class="btn btn-soft btn-sm" href="{% url 'chat:start_team' %}" title="Private chat for your shop team">{% icon 'users' %} Team</a>{% endif %}{% if user.role == 'customer' or user.shop %}<a class="btn btn-soft btn-sm" href="{% url 'chat:start_support' %}" title="Talk to Nyota support">{% icon 'headset' %}</a>{% endif %}</span></div>
+    {% for r in rows %}<a class="conv {% if active and active.pk == r.conv.pk %}on{% endif %}" href="{% url 'chat:thread' r.conv.pk %}"><span class="avatar">{{ r.title|slice:":1"|upper }}</span><div class="meta"><b>{{ r.title }}{% if r.kind == 'team' %} <span class="ny-badge ny-badge-info">Team</span>{% elif r.kind == 'support' %} <span class="ny-badge ny-badge-warn">Support</span>{% endif %}</b><small>{{ r.last }}</small></div>{% if r.unread %}<span class="unread">{{ r.unread }}</span>{% endif %}</a>
+    {% empty %}<div class="chat-empty">{% icon 'chat' %}<p>No conversations yet.</p><a class="btn btn-ny btn-sm" href="{% url 'chat:new' %}">Start one</a></div>{% endfor %}</div>
+  <div class="chat-main">{% if active %}
+    <div class="chat-top"><a href="{% url 'chat:inbox' %}" class="btn btn-ghost btn-sm d-md-none">{% icon 'arrow-left' %}</a><span class="avatar">{{ active_title|slice:":1"|upper }}</span><div><b>{{ active_title }}</b><small class="d-block text-muted"><span class="conn" id="conn"></span> live</small></div>
+      {% if other %}<form method="post" action="{% url 'chat:block' other.pk %}" class="ms-auto">{% csrf_token %}<button class="btn btn-ghost btn-sm" data-confirm="{% if i_blocked %}Unblock this person?{% else %}Block this person? They will not be able to message you.{% endif %}">{% if i_blocked %}Unblock{% else %}Block{% endif %}</button></form>{% endif %}</div>
+    <div class="msgs" id="msgs"></div>
+    <div class="composer"><div class="reply-bar" id="reply-bar"><span></span><button type="button" class="btn btn-sm" id="reply-x">{% icon 'x' 14 %}</button></div>
+      <div class="emoji-pop" id="emoji-pop"></div>
+      <div class="comp-row"><button type="button" class="round-btn" id="emoji-btn" aria-label="Emoji">{% icon 'smile' %}</button><textarea id="compose" rows="1" placeholder="Write a message. Enter to send, Shift+Enter for a new line"></textarea><button type="button" class="round-btn send" id="send" aria-label="Send">{% icon 'send' %}</button></div></div>
+  {% else %}<div class="chat-empty">{% icon 'chat' 48 %}<h3>Select a conversation</h3></div>{% endif %}</div>
+</div>{% endblock %}
+{% block pjs %}{% if active %}<script src="{% static 'js/chat.js' %}"></script>{% endif %}{% endblock %}

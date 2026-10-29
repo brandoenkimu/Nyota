@@ -1,0 +1,38 @@
+{% load nyota %}
+{% if user.is_authenticated and not user.email_verified and user.role == 'customer' %}
+<div class="verify-bar"><div class="ny-container d-flex flex-wrap justify-content-between gap-2">
+  <span>{% icon 'mail' %} Please verify your email address to unlock checkout.</span>
+  <form method="post" action="{% url 'accounts:resend_verification' %}">{% csrf_token %}<button>Resend the link</button></form>
+</div></div>
+{% endif %}
+<header class="ny-header">
+  <div class="ny-container">
+    <a href="{% url 'core:home' %}" class="brand" aria-label="Nyota home">{% brand_logo 'full' %}</a>
+    <form class="hsearch" action="{% url 'core:products' %}" role="search" autocomplete="off">
+      {% icon 'search' %}<input id="q" name="q" class="form-control" placeholder="Search products, brands and shops" value="{{ q|default:'' }}">
+      <div id="suggest" class="suggest glass"></div>
+    </form>
+    <nav class="hnav">
+      <a href="{% url 'core:products' %}" class="hide-md">Shop</a>
+      <a href="{% url 'core:shops' %}" class="hide-md">Sellers</a>
+      <a href="{% url 'core:track' %}" class="hide-md">Track</a>
+      <a href="{% url 'orders:cart' %}" class="position-relative" aria-label="Cart">{% icon 'cart' 22 %}<span class="hbadge" data-cart-count{% if not cart_count %} style="display:none"{% endif %}>{{ cart_count }}</span></a>
+      {% if user.is_authenticated %}
+        <a href="{% url 'core:notifications' %}" class="position-relative" aria-label="Notifications">{% icon 'bell' 22 %}{% if unread_notifications %}<span class="hbadge">{{ unread_notifications }}</span>{% endif %}</a>
+        <a href="{% url 'chat:inbox' %}" aria-label="Messages">{% icon 'chat' 22 %}</a>
+        <div class="dropdown">
+          <a class="userchip" href="#" data-bs-toggle="dropdown"><span class="avatar">{{ user.initials }}</span><span class="hide-md">{{ user.display_name|truncatechars:14 }}</span></a>
+          <ul class="dropdown-menu dropdown-menu-end ny-menu">
+            <li><a class="dropdown-item" href="{{ user.home_url }}">{% icon 'home' %} My portal</a></li>
+            <li><a class="dropdown-item" href="{% url 'portals:profile' %}">{% icon 'palette' %} Profile & themes</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}<button class="dropdown-item">{% icon 'logout' %} Sign out</button></form></li>
+          </ul>
+        </div>
+      {% else %}
+        <a href="{% url 'accounts:login' %}">Sign in</a>
+        <a href="{% url 'accounts:signup' %}" class="btn btn-ny btn-sm">Join free</a>
+      {% endif %}
+    </nav>
+  </div>
+</header>

@@ -1,0 +1,4 @@
+We received a request to reset the password for {{ user.email }}.
+Choose a new one here: {{ url }}
+
+If this was not you, ignore this email; nothing changes.

@@ -1,0 +1,15 @@
+{% extends 'base.html' %}{% load static nyota %}
+{% block title %}Track an order{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">{% endblock %}
+{% block content %}<div class="ny-container page-head" style="max-width:920px">
+  <span class="sec-kicker">Order tracking</span><h1>Where is my order?</h1>
+  <form class="glass p-4 mb-4 row g-3" method="get">
+    <div class="col-md-5"><div class="fl"><input class="form-control" name="number" id="n" placeholder=" " value="{{ number }}" required><label for="n">Order number (NY...)</label></div></div>
+    <div class="col-md-4"><div class="fl"><input class="form-control" name="phone" id="ph" placeholder=" " required><label for="ph">Phone used at checkout</label></div></div>
+    <div class="col-md-3"><button class="btn btn-ny w-100" style="height:3.6rem">Track</button></div>
+    <div class="col-12 small text-muted">Signed in? Your orders are tracked automatically under <a href="{% url 'portals:customer_orders' %}">My orders</a>.</div>
+  </form>
+  {% if error %}<div class="note bad">{% icon 'x' %}<div>{{ error }}</div></div>{% endif %}
+  {% if order %}<h2 class="h4 mb-3">Order {{ order.number }} <small class="text-muted">· placed {{ order.placed_at|date:"d M Y" }}</small></h2>{% include 'partials/tracking.html' %}{% endif %}
+</div>{% endblock %}
+{% block js %}{% if order %}<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script><script src="{% static 'js/trackmap.js' %}"></script>{% endif %}{% endblock %}

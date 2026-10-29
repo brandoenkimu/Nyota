@@ -1,0 +1,65 @@
+{% extends 'base.html' %}{% load nyota %}
+{% block title %}Every shop is a star{% endblock %}
+{% block content %}
+<div class="ticker"><div class="ticker-track">
+  {% for i in '12'|make_list %}<span>Free delivery on selected shops</span><span>Pay with M-Pesa or card</span><span>Live order tracking on the map</span><span>Chat with sellers in real time</span><span>Verified sellers, honest reviews</span><span>Open your own shop in minutes</span>{% endfor %}
+</div></div>
+
+<div class="ny-container">
+  <section class="hero" aria-label="Highlights">
+    {% for s in slides %}
+    <div class="hero-slide">
+      <div class="hero-art">{% hero_art s.art_variant %}</div><div class="hero-orb"></div>
+      <div class="hero-copy">
+        <span class="kicker">{{ s.kicker }}</span>
+        <h1>{{ s.title }}</h1>
+        <p class="lead">{{ s.subtitle }}</p>
+        <a href="{{ s.cta_url }}" class="btn btn-ny btn-lg">{{ s.cta_label }} {% icon 'arrow-right' %}</a>
+      </div>
+    </div>
+    {% endfor %}
+    <div class="hero-ctrl">{% for s in slides %}<button class="hero-dot" aria-label="Slide {{ forloop.counter }}"><i></i></button>{% endfor %}</div>
+    <div class="hero-arrows"><button class="round-btn" data-hero-prev aria-label="Previous">{% icon 'chevron-left' %}</button><button class="round-btn" data-hero-next aria-label="Next">{% icon 'chevron-right' %}</button></div>
+  </section>
+
+  {% if categories %}
+  <section class="section"><div class="sec-head"><div><span class="sec-kicker">Browse</span><h2>Shop by category</h2></div></div>
+    <div class="rail-wrap"><button class="rail-btn prev" aria-label="Scroll left">{% icon 'chevron-left' %}</button>
+      <div class="rail">{% for c in categories %}<a class="cat-chip" href="{% url 'core:products' %}?category={{ c.slug }}"><span class="ci">{% category_icon c.slug %}</span>{{ c.name }}</a>{% endfor %}</div>
+    <button class="rail-btn next" aria-label="Scroll right">{% icon 'chevron-right' %}</button></div>
+  </section>{% endif %}
+
+  {% if featured %}
+  <section class="section"><div class="sec-head"><div><span class="sec-kicker">Hand-picked</span><h2>Featured right now</h2></div><a class="sec-link" href="{% url 'core:products' %}">See all {% icon 'arrow-right' %}</a></div>
+    <div class="rail-wrap"><button class="rail-btn prev">{% icon 'chevron-left' %}</button><div class="rail">{% for p in featured %}{% include 'partials/product_card.html' %}{% endfor %}</div><button class="rail-btn next">{% icon 'chevron-right' %}</button></div>
+  </section>{% endif %}
+
+  {% if top_shops %}
+  <section class="section"><div class="sec-head"><div><span class="sec-kicker">The constellation</span><h2>Shops lighting up the sky</h2></div><a class="sec-link" href="{% url 'core:shops' %}">All sellers {% icon 'arrow-right' %}</a></div>
+    <div class="constellation" data-shops='[{% for s in top_shops %}{"name":"{{ s.name|escapejs }}","url":"{{ s.get_absolute_url }}","city":"{{ s.city|escapejs }}","size":{{ s.n }}}{% if not forloop.last %},{% endif %}{% endfor %}]'>
+      <canvas></canvas><div class="const-tip"></div><div class="legend">Hover a star, click to visit the shop</div></div>
+  </section>{% endif %}
+
+  {% if deals %}
+  <section class="section"><div class="sec-head"><div><span class="sec-kicker">Limited</span><h2>Deals worth a look</h2></div><a class="sec-link" href="{% url 'core:products' %}?sale=1">All deals {% icon 'arrow-right' %}</a></div>
+    <div class="rail-wrap"><button class="rail-btn prev">{% icon 'chevron-left' %}</button><div class="rail">{% for p in deals %}{% include 'partials/product_card.html' %}{% endfor %}</div><button class="rail-btn next">{% icon 'chevron-right' %}</button></div>
+  </section>{% endif %}
+
+  <section class="section"><div class="stats">
+    <div class="stat reveal"><b data-count="{{ stat_shops }}">0</b><span>Active shops</span></div>
+    <div class="stat reveal"><b data-count="{{ stat_products }}">0</b><span>Products</span></div>
+    <div class="stat reveal"><b data-count="{{ stat_orders }}">0</b><span>Orders delivered with care</span></div>
+  </div></section>
+
+  {% if new_arrivals %}
+  <section class="section"><div class="sec-head"><div><span class="sec-kicker">Just landed</span><h2>New arrivals</h2></div></div>
+    <div class="rail-wrap"><button class="rail-btn prev">{% icon 'chevron-left' %}</button><div class="rail">{% for p in new_arrivals %}{% include 'partials/product_card.html' %}{% endfor %}</div><button class="rail-btn next">{% icon 'chevron-right' %}</button></div>
+  </section>{% endif %}
+
+  <section class="section"><div class="sec-head"><div><span class="sec-kicker">How it works</span><h2>Buying should feel simple</h2></div></div>
+    <div class="steps3"><div class="reveal"><h4>Find it</h4><p class="text-muted mb-0">Search every shop at once or visit a seller's own page.</p></div><div class="reveal"><h4>Pay your way</h4><p class="text-muted mb-0">M-Pesa STK push, card, or cash on delivery.</p></div><div class="reveal"><h4>Follow it home</h4><p class="text-muted mb-0">Each order is tracked from packing to your door, with dates and map.</p></div></div>
+  </section>
+
+  <section class="section"><div class="cta-band reveal"><span class="sec-kicker">For sellers</span><h2>Your shop deserves its own sky.</h2><p class="text-muted" style="max-width:560px">A branded shop page with a map, your team with their own logins, live analytics, and payouts. Start free.</p><a href="{% url 'accounts:seller_signup' %}" class="btn btn-ny btn-lg">Open your shop</a></div></section>
+</div>
+{% endblock %}

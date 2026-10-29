@@ -1,0 +1,7 @@
+{% extends 'portal/base.html' %}{% load static nyota %}
+{% block portal %}<div class="row g-4"><div class="col-lg-6">
+  {% for a in items %}<div class="pcardx d-flex justify-content-between align-items-start"><div><b>{{ a.label }}</b>{% if a.is_default %} <span class="ny-badge ny-badge-ok">Default</span>{% endif %}<div class="small text-muted">{{ a.full_name }} · {{ a.phone }}<br>{{ a.line1 }}, {{ a.city }}{% if a.county %}, {{ a.county }}{% endif %}</div></div>
+    <form method="post" action="{% url 'portals:address_delete' a.pk %}">{% csrf_token %}<button class="btn btn-ghost btn-sm" data-confirm="Remove this address?">{% icon 'trash' %}</button></form></div>
+  {% empty %}<div class="empty">{% icon 'map' %}<p>No saved addresses.</p></div>{% endfor %}</div>
+<div class="col-lg-6"><div class="pcardx"><h3>Add an address</h3><form method="post" novalidate>{% csrf_token %}{% include 'partials/form_fields.html' %}
+  <div class="map mb-2" id="apick" data-picker="id_lat,id_lng"></div><button type="button" class="btn btn-ghost btn-sm mb-3" data-locate="apick">{% icon 'map' %} Use my location</button><br><button class="btn btn-ny">Save address</button></form></div></div></div>{% endblock %}

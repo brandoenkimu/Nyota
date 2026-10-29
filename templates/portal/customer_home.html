@@ -1,0 +1,10 @@
+{% extends 'portal/base.html' %}{% load nyota %}
+{% block portal %}
+<div class="welcome reveal"><h2>Good to see you, {{ user.first_name|default:user.display_name }} ✦</h2><p>Your orders, messages and favourites in one calm place.</p></div>
+<div class="kpis">{% for k in kpis %}<div class="kpi"><div class="lbl">{% icon k.icon %} {{ k.label }}</div><div class="val">{% if k.money %}{{ k.value|kes }}{% else %}{{ k.value }}{% endif %}</div></div>{% endfor %}</div>
+<div class="pcardx"><div class="chead"><h3>Recent orders</h3><a class="sec-link small" href="{% url 'portals:customer_orders' %}">All orders {% icon 'arrow-right' %}</a></div>
+  {% if recent %}<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Order</th><th>Date</th><th>Total</th><th>Status</th><th>Payment</th></tr></thead><tbody>{% for r in recent %}<tr class="click" data-href="{{ r.url }}">{% for c in r.cells %}<td>{{ c|cell }}</td>{% endfor %}</tr>{% endfor %}</tbody></table></div>
+  {% else %}<div class="empty" style="padding:2rem">No orders yet. <a href="{% url 'core:products' %}">Start shopping</a></div>{% endif %}</div>
+{% if followed %}<div class="pcardx"><h3>Shops you follow</h3><div class="sgrid">{% for s in followed %}{% include 'partials/shop_card.html' %}{% endfor %}</div></div>{% endif %}
+<div class="pcardx"><h3>Picked for you</h3><div class="pgrid">{% for p in recs %}{% include 'partials/product_card.html' %}{% endfor %}</div></div>
+{% endblock %}

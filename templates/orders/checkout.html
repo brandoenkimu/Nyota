@@ -1,0 +1,40 @@
+{% extends 'base.html' %}{% load static nyota %}
+{% block title %}Checkout{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">{% endblock %}
+{% block content %}<div class="ny-container page-head">
+  <span class="sec-kicker">Secure checkout</span><h1>Delivery & payment</h1>
+  <form method="post" class="row g-4 mt-1" novalidate>{% csrf_token %}
+  <div class="col-lg-7">
+    {% if form.non_field_errors %}<div class="note bad">{% icon 'x' %}<div>{{ form.non_field_errors|join:" " }}</div></div>{% endif %}
+    <section class="pcardx"><h3>Where should we deliver?</h3>
+      <div class="row g-2"><div class="col-md-6"><div class="fl">{{ form.full_name|ph }}<label>Full name</label></div></div><div class="col-md-6"><div class="fl">{{ form.phone|ph }}<label>Phone (for delivery)</label></div></div></div>
+      <div class="fl">{{ form.line1|ph }}<label>Street, building, landmark</label></div>
+      <div class="row g-2"><div class="col-md-6"><div class="fl">{{ form.city|ph }}<label>City / town</label></div></div><div class="col-md-6"><div class="fl">{{ form.county|ph }}<label>County</label></div></div></div>
+      {{ form.lat }}{{ form.lng }}
+      <p class="small text-muted mb-2">Drop a pin so the courier finds you, and you can follow the parcel to this exact spot.</p>
+      <div class="map" id="pick" data-picker="id_lat,id_lng"></div><button type="button" class="btn btn-ghost btn-sm mt-2" data-locate="pick">{% icon 'map' %} Use my location</button>
+      <div class="fl mt-3">{{ form.notes|ph }}<label>Delivery notes</label></div>
+      {% if addresses %}<div class="small text-muted">Saved: {% for a in addresses %}<span class="perm-chip">{{ a.label }}: {{ a.line1 }}, {{ a.city }}</span>{% endfor %}</div>{% endif %}
+      <div class="form-check mt-2">{{ form.save_address }}<label class="form-check-label" for="{{ form.save_address.id_for_label }}">{{ form.save_address.label }}</label></div>
+    </section>
+    <section class="pcardx"><h3>How would you like to pay?</h3>
+      <div class="paychoice">
+        {% for val, label in form.payment_method.field.choices %}<label><input type="radio" name="payment_method" value="{{ val }}" {% if form.payment_method.value == val %}checked{% endif %}>
+          <span class="pm-ico">{% if val == 'mpesa' %}M{% elif val == 'stripe' %}{% icon 'card' %}{% else %}{% icon 'truck' %}{% endif %}</span><span><b>{{ label }}</b><small class="d-block text-muted">{% if val == 'mpesa' %}An STK prompt appears on your phone{% elif val == 'stripe' %}Visa, Mastercard and more{% else %}Pay the courier when it arrives{% endif %}</small></span></label>{% endfor %}
+      </div>
+      <div class="fl mt-3" id="mp">{{ form.mpesa_phone|ph }}<label>M-Pesa number (07XX or 01XX)</label></div>
+      {% if PAYMENTS_SIMULATE %}<div class="note warn">{% icon 'shield' %}<div><b>Demo mode.</b> No real money moves. You will confirm a test payment on the next screen.</div></div>{% endif %}
+      {% for f in form %}{% if f.errors and f.name != 'payment_method' %}{% endif %}{% endfor %}
+      {% for name, errs in form.errors.items %}<div class="text-danger small">{{ name }}: {{ errs|join:" " }}</div>{% endfor %}
+    </section>
+  </div>
+  <aside class="col-lg-5"><div class="summary glass"><h3 class="h5 mb-3">Your order</h3>
+    {% for g in summary.groups %}<div class="mb-3"><b class="small text-uppercase text-muted">{{ g.shop.name }}</b>{% for l in g.lines %}<div class="d-flex justify-content-between small py-1"><span>{{ l.qty }} × {{ l.product.name|truncatechars:34 }}</span><span>{{ l.line_total|kes }}</span></div>{% endfor %}</div>{% endfor %}
+    <div class="row2"><span>Subtotal</span><span>{{ summary.subtotal|kes }}</span></div><div class="row2"><span>Shipping</span><span>{{ summary.shipping|kes }}</span></div>
+    {% if summary.discount %}<div class="row2"><span>Discount</span><span>-{{ summary.discount|kes }}</span></div>{% endif %}
+    <div class="row2 total"><span>Total</span><span>{{ summary.total|kes }}</span></div>
+    <button class="btn btn-ny w-100 btn-lg mt-3">Place order {% icon 'arrow-right' %}</button>
+  </div></aside></form>
+</div>{% endblock %}
+{% block js %}<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script><script src="{% static 'js/maps.js' %}"></script>
+<script>(function(){var mp=document.getElementById('mp');function t(){var v=(document.querySelector('input[name=payment_method]:checked')||{}).value;mp.style.display=v==='mpesa'?'':'none'}document.querySelectorAll('input[name=payment_method]').forEach(function(i){i.addEventListener('change',t)});t()})();</script>{% endblock %}

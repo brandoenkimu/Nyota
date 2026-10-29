@@ -1,0 +1,27 @@
+{% extends 'base.html' %}{% load nyota %}
+{% block title %}Pay for {{ order.number }}{% endblock %}
+{% block content %}<div class="ny-container page-head" style="max-width:680px">
+  <div class="glass p-4 p-md-5 text-center" id="payroot" data-status-url="{% url 'orders:pay_status' order.number %}" data-done-url="{% url 'orders:pay' order.number %}" data-pending="{% if payment and payment.state == 'pending' %}1{% endif %}">
+    <span class="sec-kicker">Order {{ order.number }}</span>
+    {% if payment and payment.state == 'pending' %}
+      <div class="pulse-ring">{% icon 'phone' %}</div>
+      {% if payment.method == 'mpesa' %}<h2>Check your phone</h2><p class="text-muted">We sent an M-Pesa prompt for <b>{{ order.total|kes }}</b>. Enter your PIN to finish. This page updates by itself.</p>
+      {% else %}<h2>Waiting for confirmation</h2><p class="text-muted">Complete the payment in the card window, then return here.</p>{% endif %}
+      <div id="paymsg" class="small text-muted">Waiting for payment...</div>
+      {% if simulated %}<div class="note warn text-start mt-4">{% icon 'shield' %}<div><b>Demo mode.</b> No real prompt was sent. Use the buttons below to simulate the customer's response.</div></div>
+        <form method="post" action="{% url 'orders:simulate' order.number %}" class="d-flex gap-2 justify-content-center">{% csrf_token %}<button name="action" value="pay" class="btn btn-ny">Simulate: enter PIN</button><button name="action" value="fail" class="btn btn-ghost">Simulate: cancel</button></form>{% endif %}
+    {% else %}
+      <div class="pulse-ring" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">{% icon 'card' %}</div>
+      <h2>{% if payment and payment.state == 'failed' %}Payment did not go through{% else %}Complete your payment{% endif %}</h2>
+      <p class="text-muted">{% if payment.failure_reason %}{{ payment.failure_reason }}. {% endif %}Total <b>{{ order.total|kes }}</b>. Your order is saved. Choose how to pay.</p>
+      <form method="post" action="{% url 'orders:pay_retry' order.number %}" class="text-start">{% csrf_token %}
+        <div class="paychoice">{% for val, label in methods %}<label><input type="radio" name="payment_method" value="{{ val }}" {% if forloop.first %}checked{% endif %}><span class="pm-ico">{% if val == 'mpesa' %}M{% elif val == 'stripe' %}{% icon 'card' %}{% else %}{% icon 'truck' %}{% endif %}</span><b>{{ label }}</b></label>{% endfor %}</div>
+        <div class="fl mt-3"><input class="form-control" name="mpesa_phone" placeholder=" " value="{{ user.phone }}"><label>M-Pesa number</label></div>
+        <button class="btn btn-ny w-100 btn-lg">Continue</button></form>
+      <p class="small text-muted mt-3 mb-1">Choosing <b>Pay on delivery</b> sends the order to the seller now and you pay the courier.</p>
+      <form method="post" action="{% url 'orders:pay_cancel' order.number %}" onsubmit="return confirm('Cancel this order?')">{% csrf_token %}<button class="btn btn-ghost btn-sm">Cancel this order</button></form>
+    {% endif %}
+    <p class="small mt-4 mb-0"><a href="{% url 'portals:order_detail' order.number %}">View order details</a></p>
+  </div>
+</div>{% endblock %}
+{% block js %}<script>(function(){var r=document.getElementById('payroot');if(!r||!r.dataset.pending)return;var n=0;(function p(){fetch(r.dataset.statusUrl,{credentials:'same-origin'}).then(function(x){return x.json()}).then(function(d){if(d.paid||d.state==='failed'||d.state==='cancelled'){location.href=r.dataset.doneUrl;return}if(++n<120)setTimeout(p,3000);else document.getElementById('paymsg').textContent='Still waiting. You can safely close this page; we will update your order when payment arrives.'}).catch(function(){setTimeout(p,5000)})})()})();</script>{% endblock %}

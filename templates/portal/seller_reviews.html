@@ -1,0 +1,5 @@
+{% extends 'portal/base.html' %}{% load nyota %}
+{% block portal %}{% for r in page.object_list %}<div class="review"><div class="d-flex justify-content-between"><b>{{ r.user.display_name }} on <a href="{{ r.product.get_absolute_url }}">{{ r.product.name }}</a></b><span class="rating">{% for i in r.rating|times %}★{% endfor %}</span></div>
+  {% if r.title %}<b>{{ r.title }}</b>{% endif %}<p class="mb-1">{{ r.body }}</p><small class="text-muted">{{ r.created_at|date:"d M Y" }}</small>
+  {% if r.seller_reply %}<div class="reply"><b>Your reply</b><br>{{ r.seller_reply }}</div>{% else %}<form method="post" action="{% url 'portals:seller_review_reply' r.pk %}" class="d-flex gap-2 mt-2">{% csrf_token %}<input class="form-control" name="reply" placeholder="Reply publicly..." required><button class="btn btn-soft">Reply</button></form>{% endif %}</div>
+{% empty %}<div class="empty">{% icon 'star' %}<p>No reviews yet.</p></div>{% endfor %}{% include 'partials/pager.html' %}{% endblock %}

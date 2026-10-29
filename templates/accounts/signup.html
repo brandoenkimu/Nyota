@@ -1,0 +1,13 @@
+{% extends 'accounts/_auth_base.html' %}{% load nyota %}
+{% block title %}{% if portal == 'seller' %}Open a shop{% else %}Create account{% endif %}{% endblock %}
+{% block stage_title %}{% if portal == 'seller' %}Open your own sky.{% else %}Join the constellation.{% endif %}{% endblock %}
+{% block stage_sub %}{% if portal == 'seller' %}A branded shop page, a team with their own logins, live analytics and payouts.{% else %}Track every order, save favourites and chat with sellers.{% endif %}{% endblock %}
+{% block card %}
+<h2>{% if portal == 'seller' %}Open your shop{% else %}Create your account{% endif %}</h2><p class="sub">Takes about a minute.</p>
+{% if portal == 'customer' and oauth_providers %}{% for pr in oauth_providers %}<a class="social-btn" href="{% url 'accounts:oauth_start' pr %}">{% include 'partials/oauth_icon.html' %} Sign up with {{ pr|title }}</a>{% endfor %}<div class="divider">or</div>{% endif %}
+<form method="post" novalidate>{% csrf_token %}{% include 'partials/form_fields.html' %}
+  <div class="pw-meter" id="pwm"><i></i></div><div class="mb-3"></div>
+  <button class="btn btn-ny w-100 btn-lg">{% if portal == 'seller' %}Create shop{% else %}Create account{% endif %}</button></form>
+<div class="auth-foot">Already registered? <a href="{% if portal == 'seller' %}{% url 'accounts:seller_login' %}{% else %}{% url 'accounts:login' %}{% endif %}">Sign in</a></div>
+<script>document.addEventListener('DOMContentLoaded',function(){var p=document.getElementById('id_password1'),b=document.querySelector('#pwm i');if(!p||!b)return;p.addEventListener('input',function(){var v=p.value,s=0;if(v.length>=8)s++;if(v.length>=12)s++;if(/[A-Z]/.test(v)&&/[a-z]/.test(v))s++;if(/\d/.test(v))s++;if(/[^A-Za-z0-9]/.test(v))s++;b.style.width=s*20+'%';b.style.background=['#ef4444','#ef4444','#f59e0b','#eab308','#22c55e','#10b981'][s];});});</script>
+{% endblock %}

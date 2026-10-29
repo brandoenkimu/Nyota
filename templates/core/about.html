@@ -1,0 +1,8 @@
+{% extends 'base.html' %}{% load nyota %}
+{% block title %}About{% endblock %}
+{% block content %}<div class="ny-container page-head" style="max-width:860px">
+  <span class="sec-kicker">Our story</span><h1>Every shop is a star.</h1>
+  <p class="lead text-muted">{{ COMPANY_NAME }} is a marketplace where independent sellers get their own branded page, their own team logins and honest tools, and where shoppers can see exactly where their order is.</p>
+  <div class="steps3 my-4"><div><h4>Sellers first</h4><p class="text-muted mb-0">Each shop is a small website with a map, hours, reviews and chat.</p></div><div><h4>Transparent delivery</h4><p class="text-muted mb-0">Every status change is dated and visible to both buyer and admin.</p></div><div><h4>Data you can use</h4><p class="text-muted mb-0">A warehouse and mining pipeline turns sales into forecasts and segments.</p></div></div>
+  <a href="{% url 'accounts:seller_signup' %}" class="btn btn-ny">Open a shop</a>
+</div>{% endblock %}

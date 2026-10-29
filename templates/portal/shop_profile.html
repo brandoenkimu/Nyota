@@ -1,0 +1,6 @@
+{% extends 'portal/base.html' %}{% load nyota %}
+{% block portal %}<div class="note">{% icon 'store' %}<div>This is your public page: <a href="{{ shop.get_absolute_url }}" target="_blank"><b>{{ shop.get_absolute_url }}</b></a>. Drop a pin on the map so customers can find you.</div></div>
+<form method="post" enctype="multipart/form-data" novalidate>{% csrf_token %}
+<div class="row g-4"><div class="col-lg-7"><div class="pcardx">{% include 'partials/form_fields.html' %}</div></div>
+<div class="col-lg-5"><div class="pcardx"><h3>Pin your location</h3><div class="map tall" id="shoppick" data-picker="id_lat,id_lng"></div><button type="button" class="btn btn-ghost btn-sm mt-2" data-locate="shoppick">{% icon 'map' %} Use my location</button></div>
+  <button class="btn btn-ny btn-lg w-100">Save shop page</button></div></div></form>{% endblock %}

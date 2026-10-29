@@ -1,0 +1,13 @@
+{% extends 'portal/base.html' %}{% load static nyota %}
+{% block portal %}
+<div class="d-flex flex-wrap justify-content-between gap-3 mb-3"><div><h2 class="h4 mb-1">{{ order.number }}</h2><span class="text-muted small">Placed {{ order.placed_at|date:"D d M Y, H:i" }}{% if customer %} · {{ customer.display_name }} ({{ customer.email }}){% endif %}</span></div><div class="d-flex gap-2">{% badge order.status %}{% badge order.payment_status %}</div></div>
+<div class="row g-3 mb-3"><div class="col-md-6"><div class="pcardx h-100"><h3>Delivery</h3><p class="mb-0">{{ order.ship_name }} · {{ order.ship_phone }}<br>{{ order.ship_address }}</p>{% if order.notes %}<p class="small text-muted mt-2 mb-0">Note: {{ order.notes }}</p>{% endif %}</div></div>
+<div class="col-md-6"><div class="pcardx h-100"><h3>Payment</h3><div class="d-flex justify-content-between"><span class="text-muted">Subtotal</span>{{ order.subtotal|kes }}</div><div class="d-flex justify-content-between"><span class="text-muted">Shipping</span>{{ order.shipping_total|kes }}</div>{% if order.discount_total %}<div class="d-flex justify-content-between"><span class="text-muted">Discount</span>-{{ order.discount_total|kes }}</div>{% endif %}<div class="d-flex justify-content-between fw-bold"><span>Total</span>{{ order.total|kes }}</div>
+  <small class="text-muted">{{ order.get_payment_method_display }}{% if payment.receipt %} · receipt {{ payment.receipt }}{% endif %}</small>
+  {% if order.payment_status != 'paid' and viewer == 'customer' and order.payment_method != 'cod' %}<a class="btn btn-ny btn-sm mt-2" href="{% url 'orders:pay' order.number %}">Pay now</a>{% endif %}</div></div></div>
+{% include 'partials/tracking.html' %}
+{% if viewer == 'customer' %}{% for part in parts %}{% if part.so.status == 'pending' or part.so.status == 'confirmed' %}<form method="post" action="{% url 'portals:order_cancel' part.so.pk %}" class="d-inline">{% csrf_token %}<button class="btn btn-ghost btn-sm" data-confirm="Cancel the part of this order from {{ part.so.shop.name }}?">Cancel {{ part.so.shop.name }} part</button></form> {% endif %}
+  {% if part.so.status == 'delivered' %}<span class="small text-muted">Delivered. Rate your items on their product pages.</span>{% endif %}{% endfor %}{% endif %}
+{% if viewer == 'admin' %}<div class="pcardx"><h3>Update individual parts</h3>{% for part in parts %}<a class="btn btn-soft btn-sm me-2" href="{% url 'portals:admin_shop_order' part.so.pk %}">{{ part.so.shop.name }}: manage tracking</a>{% endfor %}</div>{% endif %}
+{% endblock %}
+{% block pjs %}<script src="{% static 'js/trackmap.js' %}"></script>{% endblock %}

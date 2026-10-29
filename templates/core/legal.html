@@ -1,0 +1,18 @@
+{% extends 'base.html' %}{% load nyota %}
+{% block title %}{% if kind == 'terms' %}Terms of service{% else %}Privacy policy{% endif %}{% endblock %}
+{% block content %}<div class="ny-container page-head" style="max-width:780px">
+  <h1>{% if kind == 'terms' %}Terms of service{% else %}Privacy policy{% endif %}</h1>
+  <div class="note warn">{% icon 'shield' %}<div>Template text. Have a lawyer review it, and adapt it to your company and local law (for Kenya, the Data Protection Act, 2019) before launch.</div></div>
+  {% if kind == 'terms' %}
+  <h4>1. Using {{ COMPANY_NAME }}</h4><p>You must provide accurate information, keep your password private and use the marketplace lawfully.</p>
+  <h4>2. Buying</h4><p>Orders are contracts between you and each seller. Prices are in {{ CURRENCY }}. Sellers ship and handle returns under their own policy shown on their shop page.</p>
+  <h4>3. Selling</h4><p>Sellers are responsible for their listings, stock, fulfilment and taxes. The platform charges a commission on completed sales and may suspend shops that breach these terms.</p>
+  <h4>4. Payments</h4><p>Payments are processed by M-Pesa and Stripe. We do not store card numbers.</p>
+  <h4>5. Liability</h4><p>The platform is provided as is, to the extent the law allows.</p>
+  {% else %}
+  <h4>What we collect</h4><p>Account details, delivery addresses, order history, messages sent through chat, and technical logs (IP address, browser) for security.</p>
+  <h4>How we use it</h4><p>To process orders, show your tracking, prevent fraud, and improve the service through aggregated analytics.</p>
+  <h4>Sharing</h4><p>Sellers see what they need to fulfil your order. We never sell personal data.</p>
+  <h4>Your rights</h4><p>You can view, correct or request deletion of your data by contacting support through the chat in the footer.</p>
+  {% endif %}
+</div>{% endblock %}

@@ -1,0 +1,5 @@
+{% extends 'portal/base.html' %}{% load nyota %}
+{% block portal %}<div class="pcardx" style="max-width:760px">
+  {% if subtitle %}<p class="text-muted">{{ subtitle }}</p>{% endif %}{% if note %}<div class="note">{% icon 'bell' %}<div>{{ note }}</div></div>{% endif %}
+  <form method="post" enctype="multipart/form-data" novalidate>{% csrf_token %}{% include 'partials/form_fields.html' %}
+    <div class="d-flex gap-2 mt-3"><button class="btn btn-ny">{{ submit }}</button>{% if cancel %}<a class="btn btn-ghost" href="{{ cancel }}">Cancel</a>{% endif %}</div></form></div>{% endblock %}

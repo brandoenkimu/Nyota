@@ -1,0 +1,10 @@
+{% load nyota %}
+{% if form.non_field_errors %}<div class="note bad">{% icon 'x' %}<div>{{ form.non_field_errors|join:" " }}</div></div>{% endif %}
+{% for f in form %}{% with k=f|widget_kind %}
+  {% if k == 'hidden' %}{{ f }}
+  {% elif k == 'check' %}<div class="form-check mb-3">{{ f }}<label class="form-check-label" for="{{ f.id_for_label }}">{{ f.label }}</label>{% for e in f.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</div>
+  {% elif k == 'select' or k == 'file' or k == 'textarea' %}<div class="mb-3"><label class="form-label small text-muted" for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% if f.help_text %}<div class="form-text">{{ f.help_text }}</div>{% endif %}{% for e in f.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</div>
+  {% else %}<div class="fl">{{ f|ph }}<label for="{{ f.id_for_label }}">{{ f.label }}</label>
+    {% if k == 'password' %}<button type="button" class="btn btn-sm position-absolute" style="right:.6rem;top:.8rem;color:var(--faint)" data-pw-toggle="{{ f.id_for_label }}" tabindex="-1">{% icon 'eye' %}</button>{% endif %}
+    {% if f.help_text %}<div class="form-text">{{ f.help_text }}</div>{% endif %}{% for e in f.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}</div>
+  {% endif %}{% endwith %}{% endfor %}

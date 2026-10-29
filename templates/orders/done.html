@@ -1,0 +1,9 @@
+{% extends 'base.html' %}{% load nyota %}
+{% block title %}Order confirmed{% endblock %}
+{% block content %}<div class="ny-container page-head" style="max-width:640px"><div class="glass p-4 p-md-5 text-center">
+  <svg class="check-draw" viewBox="0 0 120 120"><circle cx="60" cy="60" r="54"/><path d="M36 62l16 16 32-34"/></svg>
+  <h1 class="h2">Thank you, {{ user.first_name|default:user.display_name }}!</h1>
+  <p class="text-muted">Order <b>{{ order.number }}</b> is {% if order.payment_status == 'paid' %}paid{% else %}confirmed, pay on delivery{% endif %}. {% if payment.receipt %}Receipt <b class="font-monospace">{{ payment.receipt }}</b>.{% endif %}</p>
+  <div class="row2 d-flex justify-content-between"><span>Total</span><b>{{ order.total|kes }}</b></div>
+  <div class="d-flex gap-2 justify-content-center mt-4 flex-wrap"><a class="btn btn-ny" href="{% url 'portals:order_detail' order.number %}">{% icon 'truck' %} Track this order</a><a class="btn btn-ghost" href="{% url 'core:products' %}">Keep shopping</a></div>
+</div></div>{% endblock %}

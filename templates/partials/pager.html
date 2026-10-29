@@ -1,0 +1,8 @@
+{% load nyota %}
+{% if page.paginator.num_pages > 1 %}
+<nav class="pager" aria-label="Pages">
+  {% if page.has_previous %}<a href="?{% qs_replace page=page.previous_page_number %}">&larr; Prev</a>{% endif %}
+  <span>Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+  {% if page.has_next %}<a href="?{% qs_replace page=page.next_page_number %}">Next &rarr;</a>{% endif %}
+</nav>
+{% endif %}

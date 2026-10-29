@@ -1,0 +1,41 @@
+{% extends 'base.html' %}{% load static nyota %}
+{% block title %}{{ shop.name }}{% endblock %}
+{% block description %}{{ shop.tagline }}{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css"><style>:root{--shop:{{ shop.brand_color }}}</style>{% endblock %}
+{% block content %}<div class="ny-container" style="--c:{{ shop.brand_color }}">
+  {% if preview %}<div class="note warn mt-3">{% icon 'eye' %}<div>Preview only. This shop is <b>{{ shop.get_status_display|lower }}</b> and not visible to customers yet.</div></div>{% endif %}
+  <section class="shop-hero">
+    <div class="shop-banner">{% if shop.banner %}<img src="{{ shop.banner.url }}" alt="">{% endif %}</div>
+    <div class="shop-head">
+      {% shop_logo shop %}
+      <div class="flex-grow-1"><h1>{{ shop.name }} {% if shop.is_verified %}<span class="verified">{% icon 'verified' 26 %}</span>{% endif %}</h1>
+        <div class="text-muted">{{ shop.tagline }}</div>
+        <div class="shop-stats"><span>{% icon 'star' %} <b>{{ shop.rating_avg }}</b> ({{ shop.rating_count }})</span><span><b>{{ stats.total|default:0 }}</b> products</span><span><b>{{ stats.sold|default:0 }}</b> sold</span><span><b id="fc">{{ follower_count }}</b> followers</span>{% if shop.city %}<span>{% icon 'map' %} {{ shop.city }}</span>{% endif %}</div></div>
+      <div class="d-flex gap-2 flex-wrap">
+        {% if user.is_authenticated %}<form method="post" action="{% url 'core:shop_follow' shop.slug %}">{% csrf_token %}<button class="btn {% if is_following %}btn-soft{% else %}btn-ny{% endif %}">{% if is_following %}Following{% else %}Follow{% endif %}</button></form>
+          {% if user.role == 'customer' %}<a class="btn btn-ghost" href="{% url 'chat:start_shop' shop.slug %}">{% icon 'chat' %} Message</a>{% endif %}
+        {% else %}<a class="btn btn-ny" href="{% url 'accounts:login' %}?next={{ request.path }}">Sign in to follow</a>{% endif %}
+      </div>
+    </div>
+  </section>
+
+  <div class="row g-4 mt-1">
+    <div class="col-lg-8">
+      <div class="rail mb-2" style="padding-top:0"><a class="cat-chip {% if not current_category %}on{% endif %}" href="?">All</a>{% for c in shop_categories %}<a class="cat-chip {% if current_category == c.slug %}on{% endif %}" href="?category={{ c.slug }}">{{ c.name }}</a>{% endfor %}</div>
+      {% if products %}<div class="pgrid">{% for p in products %}{% include 'partials/product_card.html' %}{% endfor %}</div>{% else %}<div class="empty">{% icon 'box' %}<p>This shop has not listed anything yet.</p></div>{% endif %}
+      {% if reviews %}<h3 class="mt-5 mb-3">What customers say</h3>{% for r in reviews %}<div class="review"><div class="d-flex justify-content-between"><b>{{ r.user.display_name }}</b><span class="rating">{% for i in r.rating|times %}★{% endfor %}</span></div><small class="text-muted">on <a href="{{ r.product.get_absolute_url }}">{{ r.product.name }}</a></small><p class="mb-0 mt-1">{{ r.body }}</p></div>{% endfor %}{% endif %}
+    </div>
+    <aside class="col-lg-4">
+      <div class="pcardx"><h3>About</h3><p style="white-space:pre-line" class="text-muted">{{ shop.about|default:"This seller has not written an introduction yet." }}</p>
+        <div class="social">{% if shop.instagram %}<a href="https://instagram.com/{{ shop.instagram }}" rel="noopener" target="_blank">{% icon 'instagram' %}</a>{% endif %}{% if shop.facebook %}<a href="https://facebook.com/{{ shop.facebook }}" rel="noopener" target="_blank">{% icon 'facebook' %}</a>{% endif %}{% if shop.website %}<a href="{{ shop.website }}" rel="noopener" target="_blank">{% icon 'globe' %}</a>{% endif %}{% if shop.whatsapp %}<a href="https://wa.me/{{ shop.whatsapp }}" rel="noopener" target="_blank">{% icon 'phone' %}</a>{% endif %}</div></div>
+      <div class="pcardx"><h3>Find us</h3>
+        {% if shop.has_location %}<div class="map" data-map='{"markers":[{"lat":{{ shop.lat }},"lng":{{ shop.lng }},"title":"{{ shop.name|escapejs }}","sub":"{{ shop.address|escapejs }}"}],"open":true,"color":"{{ shop.brand_color }}"}'></div>
+          <a class="btn btn-ghost btn-sm mt-2" target="_blank" rel="noopener" href="https://www.openstreetmap.org/directions?to={{ shop.lat }},{{ shop.lng }}">{% icon 'map' %} Directions</a>{% else %}<p class="text-muted mb-0">The seller has not pinned a location.</p>{% endif %}
+        <p class="small mt-3 mb-0">{{ shop.address }}{% if shop.city %}, {{ shop.city }}{% endif %}{% if shop.county %}, {{ shop.county }}{% endif %}</p></div>
+      <div class="pcardx"><h3>Opening hours</h3>{% if shop.hours_lines %}<ul class="hours">{% for l in shop.hours_lines %}<li>{{ l }}</li>{% endfor %}</ul>{% else %}<p class="text-muted mb-0">Not listed.</p>{% endif %}</div>
+      <div class="pcardx"><h3>Contact & delivery</h3><p class="small mb-1">{% if shop.phone %}{% icon 'phone' %} {{ shop.phone }}<br>{% endif %}{% if shop.contact_email %}{% icon 'mail' %} {{ shop.contact_email }}{% endif %}</p>
+        <p class="small text-muted mb-0">Delivery {{ shop.shipping_fee|kes }}{% if shop.free_shipping_over %}, free over {{ shop.free_shipping_over|kes }}{% endif %}</p></div>
+    </aside>
+  </div>
+</div>{% endblock %}
+{% block js %}<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script><script src="{% static 'js/maps.js' %}"></script>{% endblock %}

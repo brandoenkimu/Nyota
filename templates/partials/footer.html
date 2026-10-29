@@ -1,0 +1,17 @@
+{% load nyota %}
+<footer class="ny-footer"><div class="ny-container">
+  <div class="row g-4">
+    <div class="col-lg-4">{% brand_logo 'full' %}<p class="text-muted mt-3" style="max-width:340px">A marketplace of independent shops, with live order tracking, built-in chat and fair fees for sellers.</p></div>
+    <div class="col-6 col-lg-2"><h5>Shop</h5><a href="{% url 'core:products' %}">All products</a><a href="{% url 'core:shops' %}">Browse sellers</a><a href="{% url 'core:track' %}">Track an order</a></div>
+    <div class="col-6 col-lg-2"><h5>Sell</h5><a href="{% url 'accounts:seller_signup' %}">Open a shop</a><a href="{% url 'accounts:seller_login' %}">Seller sign in</a></div>
+    <div class="col-6 col-lg-2"><h5>Company</h5><a href="{% url 'core:about' %}">About</a><a href="{% url 'chat:start_support' %}">Support chat</a><a href="{% url 'accounts:staff_login' %}">Staff portal</a></div>
+    <div class="col-6 col-lg-2"><h5>Legal</h5><a href="{% url 'core:terms' %}">Terms</a><a href="{% url 'core:privacy' %}">Privacy</a></div>
+  </div>
+  <hr style="border-color:var(--line)" class="my-4">
+  <div class="d-flex flex-wrap justify-content-between gap-3 small text-muted">
+    <span>&copy; {% now 'Y' %} {{ COMPANY_NAME }}. Every shop is a star.</span>
+    <span class="d-flex align-items-center gap-2">Theme
+      <button type="button" class="accent-dot" style="width:22px;height:22px;background:linear-gradient(135deg,#070b1a 50%,#f6f7fb 50%)" data-set-theme="auto" title="Match my device"></button>{% for t in THEMES %}<button type="button" class="accent-dot" style="width:22px;height:22px;background:linear-gradient(135deg,{{ t.3.0 }} 50%,{{ t.3.1 }} 50%)" data-set-theme="{{ t.0 }}" title="{{ t.1 }}"></button>{% endfor %}
+    </span>
+  </div>
+</div></footer>

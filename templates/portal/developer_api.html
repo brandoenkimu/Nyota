@@ -1,0 +1,6 @@
+{% extends 'portal/base.html' %}{% load nyota %}
+{% block portal %}<div class="pcardx" style="max-width:820px"><h3>REST API</h3><p class="text-muted">Send your token in the <code>Authorization</code> header. Read-only endpoints for products, shops and your own orders.</p>
+<div class="cred-box mb-3">{% if token %}{{ token.key }}{% else %}No token yet.{% endif %}</div>
+<form method="post" action="{% url 'portals:developer_token' %}" class="mb-4">{% csrf_token %}<button class="btn btn-ny" data-confirm="Generate a new token? The old one stops working.">{% if token %}Regenerate token{% else %}Create token{% endif %}</button></form>
+<pre class="code-block">curl -H "Authorization: Token YOUR_TOKEN" {{ request.scheme }}://{{ request.get_host }}/api/v1/products/
+curl {{ request.scheme }}://{{ request.get_host }}/api/health/</pre></div>{% endblock %}

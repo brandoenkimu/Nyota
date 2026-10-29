@@ -1,0 +1,6 @@
+{% extends 'portal/base.html' %}{% load nyota %}
+{% block portal %}{% if page.object_list %}<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Shop</th><th>Amount</th><th>To</th><th>Requested</th><th>Status</th><th>Action</th></tr></thead><tbody>
+{% for p in page.object_list %}<tr><td>{{ p.shop.name }}</td><td>{{ p.amount|kes }}</td><td>{{ p.method }} {{ p.destination }}</td><td>{{ p.requested_at|date:"d M Y" }}</td><td>{% badge p.status %}</td><td>
+  {% if p.status == 'requested' or p.status == 'approved' %}<form method="post" action="{% url 'portals:admin_payout_action' p.pk %}" class="d-flex gap-1">{% csrf_token %}<input class="form-control form-control-sm" name="reference" placeholder="M-Pesa ref" style="width:120px">
+    {% if p.status == 'requested' %}<button name="action" value="approve" class="btn btn-soft btn-sm">Approve</button>{% endif %}<button name="action" value="pay" class="btn btn-ny btn-sm">Mark paid</button><button name="action" value="reject" class="btn btn-ghost btn-sm">Reject</button></form>{% else %}{{ p.reference }}{% endif %}</td></tr>{% endfor %}</tbody></table></div>{% include 'partials/pager.html' %}
+{% else %}<div class="empty">{% icon 'wallet' %}<p>No payout requests.</p></div>{% endif %}{% endblock %}

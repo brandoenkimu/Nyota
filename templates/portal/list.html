@@ -1,0 +1,13 @@
+{% extends 'portal/base.html' %}{% load nyota %}
+{% block portal %}
+<div class="page-actions"><span class="text-muted me-auto">{{ subtitle }}</span>{% for a in extra_actions %}{% if a.2 == 'post' %}<form method="post" action="{{ a.1 }}" class="d-inline">{% csrf_token %}<button class="btn btn-soft btn-sm">{{ a.0 }}</button></form>{% else %}<a class="btn btn-soft btn-sm" href="{{ a.1 }}">{{ a.0 }}</a>{% endif %}{% endfor %}
+  {% if add %}<a class="btn btn-ny btn-sm" href="{{ add.0 }}">{% icon 'plus' %} {{ add.1 }}</a>{% endif %}</div>
+{% if filters %}<form method="get" class="filterbar">{% for f in filters %}<div><label class="small text-muted d-block">{{ f.label }}</label>
+  {% if f.type == 'select' %}<select class="form-select" name="{{ f.name }}" onchange="this.form.submit()">{% for v, l in f.options %}<option value="{{ v }}" {% if v == f.value %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+  {% elif f.type == 'date' %}<input type="date" class="form-control" name="{{ f.name }}" value="{{ f.value }}" onchange="this.form.submit()">
+  {% else %}<input class="form-control" name="{{ f.name }}" value="{{ f.value }}" placeholder="{{ f.label }}">{% endif %}</div>{% endfor %}<button class="btn btn-ny">Filter</button></form>{% endif %}
+{% if rows %}<div class="tbl-wrap"><table class="tbl"><thead><tr>{% for h in headers %}<th>{{ h }}</th>{% endfor %}</tr></thead><tbody>
+  {% for r in rows %}<tr {% if r.url %}class="click" data-href="{{ r.url }}"{% endif %}>{% for c in r.cells %}<td>{{ c|cell }}</td>{% endfor %}</tr>{% endfor %}</tbody></table></div>
+  {% if page %}{% include 'partials/pager.html' %}{% endif %}
+{% else %}<div class="empty">{% icon 'list' %}<p>{{ empty }}</p></div>{% endif %}
+{% endblock %}

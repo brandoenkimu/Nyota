@@ -1,0 +1,14 @@
+{% extends 'base.html' %}{% load static nyota %}
+{% block title %}Sellers{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">{% endblock %}
+{% block content %}<div class="ny-container page-head">
+  <span class="sec-kicker">Independent sellers</span><h1>Find a shop near you</h1>
+  <form class="d-flex gap-2 flex-wrap my-3" method="get"><input class="form-control" style="max-width:340px" name="q" value="{{ q }}" placeholder="Shop, tagline or town">
+    <select class="form-select" style="max-width:220px" name="county" onchange="this.form.submit()"><option value="">All counties</option>{% for c in counties %}<option {% if c == county %}selected{% endif %}>{{ c }}</option>{% endfor %}</select><button class="btn btn-ny">Search</button></form>
+  {% if points %}<div class="map tall mb-4" data-map='{{ map_json|default:"{}" }}' id="shopmap"></div>{% endif %}
+  {% if shops %}<div class="sgrid">{% for s in shops %}{% include 'partials/shop_card.html' %}{% endfor %}</div>{% else %}<div class="empty">{% icon 'store' %}<h3>No shops found</h3></div>{% endif %}
+</div>{% endblock %}
+{% block js %}<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script>window.SHOP_POINTS={{ points_json|safe }};</script>
+<script>(function(){var el=document.getElementById('shopmap');if(!el)return;el.removeAttribute('data-map');var ms=(window.SHOP_POINTS||[]).map(function(p){return{lat:p.lat,lng:p.lng,title:p.name,sub:p.city,url:'/shop/'+p.slug+'/'}});el.setAttribute('data-map',JSON.stringify({markers:ms}));})();</script>
+<script src="{% static 'js/maps.js' %}"></script>{% endblock %}

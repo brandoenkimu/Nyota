@@ -1,0 +1,22 @@
+{% extends 'base.html' %}{% load static nyota %}
+{% block css %}<link rel="stylesheet" href="{% static 'css/public.css' %}"><link rel="stylesheet" href="{% static 'css/auth.css' %}">{% endblock %}
+{% block body_class %}auth{% endblock %}
+{% block chrome_top %}{% endblock %}{% block chrome_bottom %}{% endblock %}
+{% block content %}
+<div class="auth-shell">
+  <section class="auth-stage">
+    <a href="{% url 'core:home' %}" class="brand">{% brand_logo 'full' %}</a>
+    <div>
+      <div class="orbit"><i class="ring"></i><i class="ring"></i><i class="ring"></i><div class="core">{% brand_logo 'mark' %}</div></div>
+      <h1>{% block stage_title %}Every shop is a star.{% endblock %}</h1>
+      <p>{% block stage_sub %}Sign in to your corner of the Nyota sky.{% endblock %}</p>
+    </div>
+    <small class="text-muted">&copy; {% now 'Y' %} {{ COMPANY_NAME }}</small>
+  </section>
+  <section class="auth-panel">
+    <div class="auth-card">
+      <a href="{% url 'core:home' %}" class="brand d-lg-none mb-3 d-inline-block">{% brand_logo 'full' %}</a>
+      {% block card %}{% endblock %}
+    </div>
+  </section>
+</div>{% endblock %}

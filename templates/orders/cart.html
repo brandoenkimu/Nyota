@@ -1,0 +1,27 @@
+{% extends 'base.html' %}{% load nyota %}
+{% block title %}Your cart{% endblock %}
+{% block content %}<div class="ny-container page-head">
+  <span class="sec-kicker">Cart</span><h1>Your cart</h1>
+  {% if summary.groups %}
+  <div class="row g-4 mt-1"><div class="col-lg-8">
+    {% for g in summary.groups %}<section class="pcardx p-0 overflow-hidden"><div class="d-flex align-items-center gap-3 p-3" style="border-bottom:1px solid var(--line)">{% shop_logo g.shop %}<div><b>{{ g.shop.name }}</b><div class="small text-muted">Shipping {% if g.shipping %}{{ g.shipping|kes }}{% else %}free{% endif %}</div></div><span class="ms-auto fw-bold">{{ g.total|kes }}</span></div>
+      {% for l in g.lines %}<div class="cart-line">
+        <a href="{{ l.product.get_absolute_url }}">{% product_image l.product %}</a>
+        <div><a href="{{ l.product.get_absolute_url }}" class="fw-bold" style="color:var(--text)">{{ l.product.name }}</a><div class="text-muted small">{{ l.product.price|kes }} each</div>
+          {% if not l.ok %}<div class="text-danger small">Only {{ l.product.stock }} in stock. Please lower the quantity.</div>{% endif %}
+          <form method="post" action="{% url 'orders:cart_remove' l.product.pk %}" class="mt-1">{% csrf_token %}<button class="btn btn-link btn-sm p-0 text-muted">Remove</button></form></div>
+        <div class="text-end"><form method="post" action="{% url 'orders:cart_update' l.product.pk %}">{% csrf_token %}<div class="qty"><button type="button" data-qty="-1">−</button><input name="qty" value="{{ l.qty }}" max="{{ l.product.stock }}" onchange="this.form.submit()"><button type="button" data-qty="1">+</button></div></form><div class="fw-bold mt-2">{{ l.line_total|kes }}</div></div>
+      </div>{% endfor %}</section>{% endfor %}
+  </div>
+  <aside class="col-lg-4"><div class="summary glass">
+    <h3 class="h5 mb-3">Order summary</h3>
+    <form method="post" action="{% url 'orders:cart_coupon' %}" class="d-flex gap-2 mb-3">{% csrf_token %}<input class="form-control" name="code" placeholder="Coupon code" value="{{ coupon.code|default:'' }}"><button class="btn btn-soft">Apply</button></form>
+    <div class="row2"><span>Subtotal</span><span>{{ summary.subtotal|kes }}</span></div>
+    <div class="row2"><span>Shipping</span><span>{{ summary.shipping|kes }}</span></div>
+    {% if summary.discount %}<div class="row2"><span>Discount ({{ summary.percent }}%)</span><span>-{{ summary.discount|kes }}</span></div>{% endif %}
+    <div class="row2 total"><span>Total</span><span>{{ summary.total|kes }}</span></div>
+    {% if summary.ok %}<a href="{% url 'orders:checkout' %}" class="btn btn-ny w-100 btn-lg mt-3">Checkout {% icon 'arrow-right' %}</a>{% else %}<button class="btn btn-ny w-100 btn-lg mt-3" disabled>Fix stock issues to continue</button>{% endif %}
+    <p class="small text-muted mt-3 mb-0">{% icon 'shield' %} Each seller ships their own part, so you may get several parcels, each tracked separately.</p>
+  </div></aside></div>
+  {% else %}<div class="empty">{% icon 'cart' %}<h3>Your cart is empty</h3><p>Great things are waiting in the shops.</p><a class="btn btn-ny" href="{% url 'core:products' %}">Start shopping</a></div>{% endif %}
+</div>{% endblock %}

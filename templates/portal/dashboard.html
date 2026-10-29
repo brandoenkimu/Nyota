@@ -1,0 +1,13 @@
+{% extends 'portal/base.html' %}{% load nyota %}
+{% block portal %}
+{% for level, text in notes %}<div class="note {% if level == 'warn' %}warn{% elif level == 'bad' %}bad{% elif level == 'ok' %}ok{% endif %}">{% icon 'bell' %}<div>{{ text }}</div></div>{% endfor %}
+{% if subtitle or actions %}<div class="page-actions"><span class="text-muted me-auto">{{ subtitle }}</span>
+  {% for a in actions %}{% if a.2 == 'post' %}<form method="post" action="{{ a.1 }}" class="d-inline">{% csrf_token %}<button class="btn btn-soft btn-sm">{{ a.0 }}</button></form>{% else %}<a class="btn btn-soft btn-sm" href="{{ a.1 }}">{{ a.0 }}</a>{% endif %}{% endfor %}</div>{% endif %}
+{% if kpis %}<div class="kpis">{% for k in kpis %}<div class="kpi reveal"><div class="lbl">{% icon k.icon %} {{ k.label }}</div><div class="val">{% if k.money %}{{ k.value|kes }}{% else %}{{ k.value|cell }}{% endif %}</div>
+  {% if k.delta is not None %}<div class="delta {% if k.delta >= 0 %}up{% else %}down{% endif %}">{% if k.delta >= 0 %}▲{% else %}▼{% endif %} {{ k.delta }}%</div>{% endif %}{% if k.hint %}<small class="text-muted">{{ k.hint }}</small>{% endif %}</div>{% endfor %}</div>{% endif %}
+{% if charts %}<div class="dgrid">{% for c in charts %}<div class="{% if c.wide %}c12{% else %}c6{% endif %}"><div class="pcardx"><div class="chead"><h3>{{ c.title }}</h3></div><div class="chart-box"><canvas data-chart='{{ c|chart_json }}'></canvas></div></div></div>{% endfor %}</div>{% endif %}
+{% for t in tables %}<div class="pcardx"><div class="chead"><h3>{{ t.title }}</h3>{% if t.link_url %}<a class="sec-link small" href="{{ t.link_url }}">{{ t.link_label }} {% icon 'arrow-right' %}</a>{% endif %}</div>
+  {% if t.rows %}<div class="tbl-wrap"><table class="tbl"><thead><tr>{% for h in t.headers %}<th>{{ h }}</th>{% endfor %}</tr></thead><tbody>
+    {% for r in t.rows %}{% if r.cells %}<tr {% if r.url %}class="click" data-href="{{ r.url }}"{% endif %}>{% for c in r.cells %}<td>{{ c|cell }}</td>{% endfor %}</tr>{% else %}<tr>{% for c in r %}<td>{{ c|cell }}</td>{% endfor %}</tr>{% endif %}{% endfor %}
+  </tbody></table></div>{% else %}<div class="empty" style="padding:2rem 1rem">{{ t.empty }}</div>{% endif %}</div>{% endfor %}
+{% endblock %}

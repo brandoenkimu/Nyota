@@ -1,0 +1,3 @@
+{% extends 'portal/base.html' %}{% load nyota %}
+{% block portal %}<div class="empty">{% icon 'database' %}<h3>The warehouse is empty</h3><p>Analytics are built from completed orders by a nightly job. Run it now to see your numbers.</p>
+{% if can_refresh %}<form method="post" action="{% if user.role == 'seller_owner' or user.role == 'seller_staff' %}{% url 'portals:seller_analytics_refresh' %}{% else %}{% url 'portals:analyst_refresh' %}{% endif %}">{% csrf_token %}<button class="btn btn-ny">{% icon 'refresh' %} Build warehouse now</button></form>{% endif %}</div>{% endblock %}

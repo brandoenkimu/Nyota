@@ -1,0 +1,18 @@
+{% load nyota %}
+<article class="pcard reveal">
+  <div class="pcard-tags">
+    {% if p.discount_percent %}<span class="tag">-{{ p.discount_percent }}%</span>{% endif %}
+    {% if not p.in_stock %}<span class="tag dark">Sold out</span>{% elif p.low_stock %}<span class="tag warn">Only {{ p.stock }} left</span>{% endif %}
+  </div>
+  <button class="wish" type="button" data-wish="{% url 'core:wishlist_toggle' p.pk %}" aria-label="Save to wishlist">{% icon 'heart' %}</button>
+  <a href="{{ p.get_absolute_url }}" aria-label="{{ p.name }}">{% product_image p %}</a>
+  <div class="pcard-body">
+    <a class="pcard-shop" href="{{ p.shop.get_absolute_url }}">{{ p.shop.name }}</a>
+    <a class="pcard-title" href="{{ p.get_absolute_url }}">{{ p.name }}</a>
+    <span class="rating">{% for s in p.rating_avg|stars %}{% if s == 'empty' %}<span class="empty">★</span>{% else %}★{% endif %}{% endfor %}{% if p.rating_count %}<small>({{ p.rating_count }})</small>{% endif %}</span>
+    <div class="pcard-foot">
+      <span class="price">{{ p.price|kes }}{% if p.discount_percent %}<del>{{ p.compare_at_price|kes }}</del>{% endif %}</span>
+      <form method="post" action="{% url 'orders:cart_add' p.pk %}" data-ajax-cart>{% csrf_token %}<button class="add-btn" {% if not p.in_stock %}disabled{% endif %} aria-label="Add to cart">{% icon 'plus' %}</button></form>
+    </div>
+  </div>
+</article>

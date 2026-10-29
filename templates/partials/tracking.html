@@ -1,0 +1,30 @@
+{% load nyota %}
+{% for part in parts %}{% with so=part.so %}
+<section class="pcardx">
+  <div class="chead">
+    <div class="d-flex align-items-center gap-3">{% shop_logo so.shop %}<div><h3 class="mb-0">{{ so.shop.name }}</h3><small class="text-muted">{{ part.items|length }} item{{ part.items|length|pluralize }} · {{ so.total|kes }}</small></div></div>
+    {% badge so.status so.get_status_display %}
+  </div>
+  {% if so.status == 'cancelled' or so.status == 'returned' %}
+    <div class="note bad">{% icon 'x' %}<div>This part of the order was {{ so.get_status_display|lower }}.</div></div>
+  {% else %}
+  <div class="stepper" style="--w:{{ part.pct }}%"><div class="fillbar"></div>
+    {% for st in part.steps %}<div class="stp {% if st.done %}done{% endif %}{% if st.key == so.status %} now{% endif %}"><i>{% if st.done %}{% icon 'check' 14 %}{% else %}{{ forloop.counter }}{% endif %}</i>{{ st.label }}{% if st.at %}<small class="d-block text-muted">{{ st.at|date:"d M, H:i" }}</small>{% endif %}</div>{% endfor %}
+  </div>{% endif %}
+  <div class="row g-3 mt-1">
+    <div class="col-md-7"><ul class="timeline">
+      {% for ev in part.events reversed %}<li><b>{{ ev.title }}</b><span class="text-muted">{{ ev.detail }}</span><small>{{ ev.occurred_at|date:"D d M Y, H:i" }}{% if ev.location_label %} · {{ ev.location_label }}{% endif %}</small></li>
+      {% empty %}<li><b>Waiting for the seller</b><small>No updates yet</small></li>{% endfor %}
+    </ul></div>
+    <div class="col-md-5"><dl class="small mb-0">
+      {% if so.courier %}<dt class="text-muted">Courier</dt><dd>{{ so.courier }}</dd>{% endif %}
+      {% if so.tracking_number %}<dt class="text-muted">Tracking no.</dt><dd class="font-monospace">{{ so.tracking_number }}</dd>{% endif %}
+      {% if so.expected_delivery %}<dt class="text-muted">Expected by</dt><dd>{{ so.expected_delivery|date:"l, d M Y" }}</dd>{% endif %}
+      {% if so.shipped_at %}<dt class="text-muted">Shipped</dt><dd>{{ so.shipped_at|date:"d M Y, H:i" }}</dd>{% endif %}
+      {% if so.delivered_at %}<dt class="text-muted">Delivered</dt><dd>{{ so.delivered_at|date:"d M Y, H:i" }}</dd>{% endif %}
+    </dl>
+    <div class="mt-2">{% for it in part.items %}<div class="d-flex justify-content-between small py-1 border-bottom" style="border-color:var(--line)!important"><span>{{ it.quantity }} × {{ it.name }}</span><span>{{ it.line_total|kes }}</span></div>{% endfor %}</div></div>
+  </div>
+</section>{% endwith %}{% endfor %}
+<section class="pcardx"><div class="chead"><h3>Journey map</h3></div><div class="map tall" id="trackmap"></div></section>
+<script>window.NYOTA_POINTS = {{ points_json|safe }};</script>

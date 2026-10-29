@@ -1,0 +1,18 @@
+{% extends 'accounts/_auth_base.html' %}{% load nyota %}
+{% block title %}{{ p.badge }} sign in{% endblock %}
+{% block stage_title %}{{ p.title }}{% endblock %}{% block stage_sub %}{{ p.sub }}{% endblock %}
+{% block card %}
+<div class="door-tabs"><a href="{% url 'accounts:login' %}" class="{% if portal == 'customer' %}on{% endif %}">Customer</a><a href="{% url 'accounts:seller_login' %}" class="{% if portal == 'seller' %}on{% endif %}">Seller</a><a href="{% url 'accounts:staff_login' %}" class="{% if portal == 'staff' %}on{% endif %}">Staff</a></div>
+<h2>{{ p.title }}</h2><p class="sub">{{ p.badge }} sign-in. {% if portal == 'staff' %}Use the work email you were issued.{% endif %}</p>
+{% if portal == 'customer' and oauth_providers %}
+  {% for pr in oauth_providers %}<a class="social-btn" href="{% url 'accounts:oauth_start' pr %}?next={{ next|urlencode }}">{% include 'partials/oauth_icon.html' %}Continue with {{ pr|title }}</a>{% endfor %}
+  <div class="divider">or with your email</div>
+{% endif %}
+<form method="post" data-warp novalidate>{% csrf_token %}
+  <input type="hidden" name="next" value="{{ next }}">
+  {% include 'partials/form_fields.html' %}
+  <div class="d-flex justify-content-between align-items-center mb-3"><div class="form-check"><input class="form-check-input" type="checkbox" name="remember" id="rm" checked><label class="form-check-label small" for="rm">Keep me signed in</label></div><a class="small" href="{% url 'accounts:password_reset' %}">Forgot password?</a></div>
+  <button class="btn btn-ny w-100 btn-lg">Sign in {% icon 'arrow-right' %}</button>
+</form>
+<div class="auth-foot">{% if portal == 'customer' %}New here? <a href="{% url 'accounts:signup' %}">Create an account</a>{% elif portal == 'seller' %}No shop yet? <a href="{% url 'accounts:seller_signup' %}">Open one free</a>{% else %}Staff accounts are created by an administrator.{% endif %}</div>
+{% endblock %}

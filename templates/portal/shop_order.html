@@ -1,0 +1,18 @@
+{% extends 'portal/base.html' %}{% load static nyota %}
+{% block portal %}
+<div class="d-flex flex-wrap justify-content-between gap-3 mb-3"><div><h2 class="h4 mb-1">{{ order.number }} <small class="text-muted">· {{ so.shop.name }}</small></h2><span class="text-muted small">{{ customer.display_name }} · {{ order.ship_phone }} · {{ order.ship_address }}</span></div><div class="d-flex gap-2">{% badge so.status so.get_status_display %}{% badge order.payment_status %}</div></div>
+<div class="row g-3"><div class="col-lg-7">
+  <div class="pcardx"><h3>Items</h3><div class="tbl-wrap"><table class="tbl"><tbody>{% for part in parts %}{% for it in part.items %}<tr><td>{{ it.name }}</td><td>× {{ it.quantity }}</td><td class="text-end">{{ it.line_total|kes }}</td></tr>{% endfor %}{% endfor %}
+    <tr><td colspan="2" class="text-muted">Shipping</td><td class="text-end">{{ so.shipping_fee|kes }}</td></tr><tr><td colspan="2"><b>Total</b></td><td class="text-end"><b>{{ so.total|kes }}</b></td></tr>
+    <tr><td colspan="2" class="text-muted">Commission ({{ so.commission_percent }}%)</td><td class="text-end">-{{ so.commission_amount|kes }}</td></tr><tr><td colspan="2"><b>Seller earns</b></td><td class="text-end"><b>{{ so.seller_earnings|kes }}</b></td></tr></tbody></table></div></div>
+  {% include 'partials/tracking.html' %}
+</div><div class="col-lg-5">
+  {% if so.is_closed %}<div class="note ok">{% icon 'check' %}<div>This order is {{ so.get_status_display|lower }}. No further updates are possible.</div></div>
+  {% else %}<div class="pcardx"><h3>Update tracking</h3><p class="small text-muted">The customer sees every update with its date, and gets a notification.</p>
+    <form method="post" novalidate>{% csrf_token %}{% include 'partials/form_fields.html' %}
+      <div class="map mb-2" id="epick" data-picker="id_lat,id_lng"></div><button type="button" class="btn btn-ghost btn-sm mb-3" data-locate="epick">{% icon 'map' %} Use my location</button><br>
+      <button class="btn btn-ny">Save update</button></form></div>
+  {% if viewer == 'seller' %}{% if so.status == 'pending' or so.status == 'confirmed' %}<form method="post" action="{% url 'portals:seller_order_cancel' so.pk %}" class="mt-2">{% csrf_token %}<input class="form-control mb-2" name="reason" placeholder="Reason for cancelling"><button class="btn btn-ghost btn-sm" data-confirm="Cancel this order part and restock the items?">Cancel this order</button></form>{% endif %}{% endif %}{% endif %}
+  <a class="btn btn-soft btn-sm mt-3" href="{% url 'chat:start_user' customer.pk %}">{% icon 'chat' %} Message {{ customer.first_name|default:"customer" }}</a>
+</div></div>{% endblock %}
+{% block pjs %}<script src="{% static 'js/trackmap.js' %}"></script>{% endblock %}

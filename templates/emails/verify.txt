@@ -1,0 +1,6 @@
+Hi {{ user.first_name|default:user.display_name }},
+
+Confirm your email address for Nyota (link valid for 3 days):
+{{ url }}
+
+If you did not create an account, ignore this message.
