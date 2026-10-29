@@ -128,3 +128,9 @@ core/        storefront, themes, artwork, error tracking, seed_demo
 api/         REST
 templates/ static/   the interface
 ```
+
+##  CLONE
+```powershell
+git clone https://github.com/brandoenkimu/elimu.git
+cd elimu
+```
