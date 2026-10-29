@@ -131,6 +131,6 @@ templates/ static/   the interface
 
 ##  CLONE
 ```powershell
-git clone https://github.com/brandoenkimu/elimu.git
-cd elimu
+git clone https://github.com/brandoenkimu/Nyota.git
+cd Nyota
 ```
