@@ -1,0 +1,18 @@
+{% extends 'base.html' %}{% load nyota %}
+{% block title %}Pay for advertising{% endblock %}
+{% block content %}<div class="ny-container page-head" style="max-width:680px">
+  <div class="glass p-4 p-md-5 text-center" id="payroot" data-status-url="{% url 'ads:pay_status' promo.pk %}" data-pending="{% if payment and payment.state == 'pending' %}1{% endif %}">
+    <span class="sec-kicker">{{ promo.plan.name }} · {{ promo.shop.name }}</span>
+    {% if payment and payment.state == 'pending' %}
+      <div class="pulse-ring">{% icon 'phone' %}</div>
+      {% if payment.method == 'mpesa' %}<h2>Check your phone</h2><p class="text-muted">We sent an M-Pesa prompt for <b>{{ promo.amount|kes }}</b>. Enter your PIN to finish.</p>
+      {% else %}<h2>Waiting for confirmation</h2><p class="text-muted">Complete the payment in the card window, then return here.</p>{% endif %}
+      <div id="paymsg" class="small text-muted">Waiting for payment...</div>
+      {% if simulated %}<div class="note warn text-start mt-4">{% icon 'shield' %}<div><b>Demo mode.</b> No real prompt was sent.</div></div>
+        <form method="post" action="{% url 'ads:simulate' promo.pk %}" class="d-flex gap-2 justify-content-center">{% csrf_token %}<button name="action" value="pay" class="btn btn-ny">Simulate: enter PIN</button><button name="action" value="fail" class="btn btn-ghost">Simulate: cancel</button></form>{% endif %}
+      <form method="post" action="{% url 'ads:cancel' promo.pk %}" class="mt-3" onsubmit="return confirm('Cancel this purchase?')">{% csrf_token %}<button class="btn btn-ghost btn-sm">Cancel</button></form>
+    {% elif promo.status == 'cancelled' %}<h2>Payment did not go through</h2><p class="text-muted">{% if payment.failure_reason %}{{ payment.failure_reason }}. {% endif %}You can buy a plan again from Advertise.</p><a class="btn btn-ny" href="{% url 'ads:plans' %}">Back to plans</a>
+    {% endif %}
+  </div>
+</div>{% endblock %}
+{% block js %}<script>(function(){var r=document.getElementById('payroot');if(!r||!r.dataset.pending)return;var n=0;(function p(){fetch(r.dataset.statusUrl,{credentials:'same-origin'}).then(function(x){return x.json()}).then(function(d){if(d.active||d.failed){location.reload();return}if(++n<120)setTimeout(p,3000);else document.getElementById('paymsg').textContent='Still waiting. You can safely close this page.'}).catch(function(){setTimeout(p,5000)})})()})();</script>{% endblock %}

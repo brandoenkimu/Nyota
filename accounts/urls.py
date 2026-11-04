@@ -9,6 +9,7 @@ app_name = 'accounts'
 urlpatterns = [
     path('login/', views.PortalLoginView.as_view(portal='customer'), name='login'),
     path('seller/login/', views.PortalLoginView.as_view(portal='seller'), name='seller_login'),
+    path('people/<str:username>/', views.person, name='person'),
     path('staff/login/', views.PortalLoginView.as_view(portal='staff'), name='staff_login'),
     path('logout/', views.logout_view, name='logout'),
     path('signup/', views.CustomerSignupView.as_view(), name='signup'),

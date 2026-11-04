@@ -1,0 +1,8 @@
+{% extends 'portal/base.html' %}{% load nyota %}
+{% block portal %}
+<div class="page-actions"><a class="btn btn-soft btn-sm" href="{{ base }}people/">Pay profiles</a><a class="btn btn-soft btn-sm" href="{{ base }}grades/">Ranks</a><a class="btn btn-soft btn-sm" href="{{ base }}categories/">Job categories</a></div>
+{% if missing %}<div class="note warn mb-3">{% icon 'alert' %}<div>{{ missing }} staff member{{ missing|pluralize }} {{ missing|pluralize:"has,have" }} no pay profile and will be left out of payroll. <a href="{{ base }}people/">Set them up</a>.</div></div>{% endif %}
+<div class="note mb-3">{% icon 'shield' %}<div>Pay = rank salary + job-category allowance + fixed allowance + overtime, minus unpaid absence, lateness and statutory deductions (PAYE, NSSF, SHIF, housing levy). Statutory rates are Kenyan defaults: confirm the current rates before paying real staff.{% if not shop %} Two-person rule: an administrator prepares, the CEO approves.{% endif %}</div></div>
+{% if form %}<form method="post" class="glass p-3 mb-4 d-flex flex-wrap gap-3 align-items-end">{% csrf_token %}<div>{{ form.month.label_tag }}{{ form.month }}</div><button class="btn btn-ny">Prepare payroll from attendance</button></form>{% endif %}
+{% if rows %}<div class="tbl-wrap"><table class="tbl"><thead><tr>{% for h in headers %}<th>{{ h }}</th>{% endfor %}</tr></thead><tbody>{% for r in rows %}<tr class="click" data-href="{{ r.url }}">{% for c in r.cells %}<td>{{ c|cell }}</td>{% endfor %}</tr>{% endfor %}</tbody></table></div>{% else %}<div class="empty">{% icon 'list' %}<p>No payroll runs yet.</p></div>{% endif %}
+{% endblock %}

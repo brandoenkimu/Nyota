@@ -1,0 +1,13 @@
+{% extends 'portal/base.html' %}{% load nyota %}
+{% block portal %}
+<div class="glass p-4 mb-4"><div class="d-flex align-items-center gap-3"><span class="avatar" style="width:54px;height:54px">{{ m.initials }}</span><div><h5 class="mb-0">{{ m.display_name }}</h5><div class="small text-muted">{{ m.email }} · {{ m.get_role_display }} · {% if m.is_active %}active{% else %}disabled{% endif %} · last seen {% if m.last_seen %}{{ m.last_seen|date:"d M H:i" }}{% else %}never{% endif %}</div></div></div></div>
+<div class="row g-4">
+  <div class="col-lg-6"><div class="glass p-4"><h5>Errors this member hit</h5>
+    {% for e in errs %}<div class="py-2 border-bottom small" style="border-color:var(--line)!important"><b>{{ e.reference }}</b> · {{ e.created_at|date:"d M H:i" }}<br><a href="{% url 'portals:error_detail' e.group_id %}">{{ e.group.exc_type }}: {{ e.group.message|truncatechars:90 }}</a><br><span class="text-muted">{{ e.path }}</span></div>{% empty %}<p class="text-muted small mb-0">No errors recorded.</p>{% endfor %}</div>
+  {% if orders %}<div class="glass p-4 mt-4"><h5>Recent orders</h5>{% for o in orders %}<div class="small py-1"><a href="{% url 'portals:support_order' o.number %}">{{ o.number }}</a> · {{ o.total|kes }} · {{ o.get_payment_status_display }}</div>{% endfor %}</div>{% endif %}</div>
+  <div class="col-lg-6"><div class="glass p-4"><h5>Recent journey</h5>
+    {% for a in acts %}<div class="small py-1 border-bottom" style="border-color:var(--line)!important"><span class="text-muted">{{ a.created_at|date:"d M H:i:s" }}</span> · <b>{{ a.kind }}</b> {{ a.path }}{% if a.label %} · {{ a.label }}{% endif %} <span class="text-muted">({{ a.device }}{% if a.status_code != 200 %}, {{ a.status_code }}{% endif %})</span></div>{% empty %}<p class="text-muted small mb-0">No activity recorded.</p>{% endfor %}</div></div>
+</div>
+<div class="glass p-4 mt-4"><h5>Audit trail (their actions)</h5><div class="tbl-wrap"><table class="tbl"><thead><tr><th>When</th><th>Action</th><th>Target</th><th>IP</th></tr></thead><tbody>
+  {% for a in audits %}<tr><td>{{ a.created_at|date:"d M H:i:s" }}</td><td>{{ a.action }}</td><td>{{ a.target_repr }}</td><td>{{ a.ip }}</td></tr>{% empty %}<tr><td colspan="4" class="text-muted">Nothing yet.</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

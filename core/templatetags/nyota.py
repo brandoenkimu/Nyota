@@ -275,3 +275,25 @@ def chart_json(c):
                'datasets': [{'label': d.get('label', ''), 'data': [float(v) if v is not None else None for v in d['data']]}
                             for d in c['datasets']]}
     return json.dumps(payload).replace('<', '\\u003c')
+
+
+# ---- third-party assets: use the local copy in static/vendor when present (python manage.py fetch_vendor),
+# otherwise the CDN, loaded so that a slow or blocked CDN can never hold up the page.
+def _local_vendor(name):
+    from django.contrib.staticfiles import finders
+    from django.templatetags.static import static
+    return static('vendor/' + name) if finders.find('vendor/' + name) else ''
+
+
+@register.simple_tag
+def vendor_css(name, cdn):
+    local = _local_vendor(name)
+    if local:
+        return format_html('<link rel="stylesheet" href="{}">', local)
+    return format_html('<link rel="stylesheet" href="{0}" media="print" onload="this.media=\'all\'">'
+                       '<noscript><link rel="stylesheet" href="{0}"></noscript>', cdn)
+
+
+@register.simple_tag
+def vendor_js(name, cdn):
+    return format_html('<script src="{}"></script>', _local_vendor(name) or cdn)

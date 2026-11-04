@@ -98,6 +98,10 @@
     var el = document.createElement('div'); el.className = 'warp'; var c = document.createElement('canvas'); el.appendChild(c); document.body.appendChild(el);
     var w = c.width = innerWidth, h = c.height = innerHeight, ctx = c.getContext('2d'), a = rgb(), pts = [], t0 = performance.now();
     for (var i = 0; i < 260; i++) pts.push({ ang: Math.random() * 6.283, r: Math.random() * 40, v: 2 + Math.random() * 5 });
+    var lab = document.createElement('div'); lab.className = 'warp-label'; lab.textContent = 'Entering Nyota…'; el.appendChild(lab);
+    var fired = false; function finish() { if (!fired) { fired = true; done && done(); } }
+    window.addEventListener('pageshow', function (e) { if (e.persisted) el.remove(); });   /* Back button: never leave the overlay up */
+    setTimeout(function () { lab.textContent = 'Still working… this is taking longer than usual'; }, 6000);
     requestAnimationFrame(function () { el.classList.add('on'); });
     (function step(t) {
       var p = Math.min(1, (t - t0) / 900);
@@ -109,7 +113,8 @@
         ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(nx, ny); ctx.stroke();
         if (s.r > Math.max(w, h)) s.r = Math.random() * 30;
       });
-      if (p < 1) requestAnimationFrame(step); else done && done();
+      if (p >= 1) finish();
+      if (el.isConnected) requestAnimationFrame(step);   /* keeps moving until the next page replaces it */
     })(t0);
   };
 

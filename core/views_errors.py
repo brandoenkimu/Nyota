@@ -1,3 +1,4 @@
+from django.http import HttpResponse
 from django.shortcuts import render
 
 
@@ -6,4 +7,8 @@ def not_found(request, exception=None):
 
 
 def server_error(request):
-    return render(request, 'errors/500.html', status=500)
+    ref = getattr(request, 'error_reference', '')
+    try:
+        return render(request, 'errors/500.html', {'reference': ref}, status=500)
+    except Exception:       # even the error page must never fail
+        return HttpResponse(f'Something went wrong. Reference {ref}', status=500)

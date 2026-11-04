@@ -59,3 +59,38 @@ def temp_password(length: int = 12) -> str:
         pw = ''.join(secrets.choice(alphabet) for _ in range(length))
         if any(c.isdigit() for c in pw) and any(c.islower() for c in pw) and any(c.isupper() for c in pw):
             return pw
+
+
+def regenerate_staff_identity(user):
+    """Rebuild a staff member's login username/company e-mail from their *current* name, keeping the
+    same position and company — call this right after their first/last name is edited. The new identity
+    works for sign-in immediately (login accepts username or e-mail). Returns (username, email) if
+    anything changed, or None if this isn't a generated staff identity or nothing actually changed."""
+    from django.conf import settings
+
+    from .models import PLATFORM_ROLES, Role
+
+    User = user.__class__
+    if user.role in PLATFORM_ROLES:
+        code, domain = PLATFORM_CODES.get(user.role), settings.COMPANY_DOMAIN
+    elif user.role == Role.SELLER_STAFF:
+        membership = getattr(user, 'shop_membership', None)
+        if not membership or not membership.active:
+            return None
+        code = SHOP_CODES.get(membership.role)
+        domain = f'{domain_part(membership.shop.slug)}.{settings.COMPANY_DOMAIN}'
+    else:
+        return None
+    if not code:
+        return None
+
+    def exists(u, e):
+        return (User.objects.filter(username__iexact=u).exclude(pk=user.pk).exists()
+                or User.objects.filter(email__iexact=e).exclude(pk=user.pk).exists())
+
+    username, email = build_identity(user.first_name, user.last_name, code, domain, exists)
+    if username == user.username and email == user.email:
+        return None
+    user.username, user.email = username, email
+    user.save(update_fields=['username', 'email'])
+    return username, email

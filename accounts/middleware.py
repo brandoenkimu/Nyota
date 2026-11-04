@@ -8,7 +8,9 @@ from django.utils import timezone
 class AccountStateMiddleware:
     """Keeps 'last seen' fresh and forces a password change after an administrator-issued password."""
 
-    ALLOWED_PREFIXES = ('/static/', '/media/', '/logout/', '/account/password/', '/ws/')
+    # A forced password change must never trap someone who has forgotten THAT password too:
+    # they still need a way out through 'forgot password' and signing out.
+    ALLOWED_PREFIXES = ('/static/', '/media/', '/logout/', '/account/password/', '/password/reset/', '/ws/')
 
     def __init__(self, get_response):
         self.get_response = get_response

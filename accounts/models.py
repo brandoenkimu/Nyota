@@ -52,6 +52,10 @@ class User(AbstractUser):
     theme = models.CharField(max_length=20, default='auto')
     accent = models.CharField(max_length=20, default='violet')
     last_seen = models.DateTimeField(null=True, blank=True)
+    last_username_change = models.DateTimeField(null=True, blank=True,
+                                                 help_text='A username can only be changed once a week.')
+    profile_visibility = models.CharField('Who can see my profile card', max_length=10, default='members',
+                                          choices=[('members', 'Other Nyota members'), ('private', 'Only people I chat or trade with')])
 
     objects = NyotaUserManager()
 

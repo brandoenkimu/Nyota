@@ -1,6 +1,6 @@
 {% extends 'base.html' %}{% load static nyota %}
 {% block title %}Checkout{% endblock %}
-{% block extra_head %}<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">{% endblock %}
+{% block extra_head %}{% vendor_css 'leaflet/leaflet.css' 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css' %}{% endblock %}
 {% block content %}<div class="ny-container page-head">
   <span class="sec-kicker">Secure checkout</span><h1>Delivery & payment</h1>
   <form method="post" class="row g-4 mt-1" novalidate>{% csrf_token %}
@@ -36,5 +36,5 @@
     <button class="btn btn-ny w-100 btn-lg mt-3">Place order {% icon 'arrow-right' %}</button>
   </div></aside></form>
 </div>{% endblock %}
-{% block js %}<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script><script src="{% static 'js/maps.js' %}"></script>
+{% block js %}{% vendor_js 'leaflet/leaflet.js' 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js' %}<script src="{% static 'js/maps.js' %}"></script>
 <script>(function(){var mp=document.getElementById('mp');function t(){var v=(document.querySelector('input[name=payment_method]:checked')||{}).value;mp.style.display=v==='mpesa'?'':'none'}document.querySelectorAll('input[name=payment_method]').forEach(function(i){i.addEventListener('change',t)});t()})();</script>{% endblock %}

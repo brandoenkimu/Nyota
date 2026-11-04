@@ -6,7 +6,7 @@
     {% empty %}<div class="chat-empty">{% icon 'chat' %}<p>No conversations yet.</p><a class="btn btn-ny btn-sm" href="{% url 'chat:new' %}">Start one</a></div>{% endfor %}</div>
   <div class="chat-main">{% if active %}
     <div class="chat-top"><a href="{% url 'chat:inbox' %}" class="btn btn-ghost btn-sm d-md-none">{% icon 'arrow-left' %}</a><span class="avatar">{{ active_title|slice:":1"|upper }}</span><div><b>{{ active_title }}</b><small class="d-block text-muted"><span class="conn" id="conn"></span> live</small></div>
-      {% if other %}<form method="post" action="{% url 'chat:block' other.pk %}" class="ms-auto">{% csrf_token %}<button class="btn btn-ghost btn-sm" data-confirm="{% if i_blocked %}Unblock this person?{% else %}Block this person? They will not be able to message you.{% endif %}">{% if i_blocked %}Unblock{% else %}Block{% endif %}</button></form>{% endif %}</div>
+      {% if other %}<a class="btn btn-ghost btn-sm ms-auto" href="{% url 'accounts:person' other.username %}">Profile</a><form method="post" action="{% url 'chat:block' other.pk %}" class="ms-1">{% csrf_token %}<button class="btn btn-ghost btn-sm" data-confirm="{% if i_blocked %}Unblock this person?{% else %}Block this person? They will not be able to message you.{% endif %}">{% if i_blocked %}Unblock{% else %}Block{% endif %}</button></form>{% endif %}</div>
     <div class="msgs" id="msgs"></div>
     <div class="composer"><div class="reply-bar" id="reply-bar"><span></span><button type="button" class="btn btn-sm" id="reply-x">{% icon 'x' 14 %}</button></div>
       <div class="emoji-pop" id="emoji-pop"></div>

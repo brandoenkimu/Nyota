@@ -120,7 +120,16 @@ class SlideForm(BootstrapMixin, forms.ModelForm):
 class ShopAdminForm(BootstrapMixin, forms.ModelForm):
     class Meta:
         model = Shop
-        fields = ['status', 'is_verified', 'commission_override']
+        fields = ['status', 'commission_override']
+
+    def clean_status(self):
+        from django.conf import settings
+        status = self.cleaned_data['status']
+        if (status == 'active' and self.instance.status != 'active' and settings.REQUIRE_SELLER_VERIFICATION
+                and not self.instance.is_verified):
+            raise forms.ValidationError('This shop has not passed verification. The CEO approves sellers from '
+                                        'Seller verification; that is what makes a shop public.')
+        return status
 
 
 class UserAdminForm(BootstrapMixin, forms.ModelForm):

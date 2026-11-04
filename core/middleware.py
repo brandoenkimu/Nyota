@@ -32,7 +32,7 @@ class MembersOnlyMiddleware:
 
     PUBLIC_PREFIXES = (
         '/static/', '/favicon.ico', '/login/', '/seller/login/', '/staff/login/', '/signup/', '/seller/signup/',
-        '/verify-email/', '/password/reset/', '/oauth/', '/terms/', '/privacy/', '/django-admin/',
+        '/verify-email/', '/password/reset/', '/oauth/', '/terms/', '/privacy/', '/policies/', '/api/client-error/', '/django-admin/',
         '/payments/mpesa/callback/', '/payments/stripe/webhook/', '/api/health/',
     )
 

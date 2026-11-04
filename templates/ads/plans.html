@@ -1,0 +1,18 @@
+{% extends 'portal/base.html' %}{% load nyota %}
+{% block portal %}
+{% if live %}<div class="note ok mb-3">{% icon 'verified' %}<div><b>{{ shop.name }} is featured on the home page.</b> {{ live.days_left }} day{{ live.days_left|pluralize }} left (until {{ live.ends_at|date:"d M Y" }}). Buy another plan any time to extend once this ends.</div></div>
+{% else %}<div class="note mb-3">{% icon 'image' %}<div>Buy a slot to put {{ shop.name }} on the Nyota home-page carousel — the first thing every visitor sees.</div></div>{% endif %}
+{% if pending %}<div class="note warn mb-3">{% icon 'bell' %}<div>You have a purchase waiting for payment. <a href="{% url 'ads:pay' pending.pk %}">Finish paying</a> or <form method="post" action="{% url 'ads:cancel' pending.pk %}" class="d-inline">{% csrf_token %}<button class="btn btn-link p-0 align-baseline">cancel it</button></form>.</div></div>{% endif %}
+
+<div class="row g-4 mb-4">{% for p in plans %}<div class="col-md-4"><div class="glass p-4 h-100 d-flex flex-column">
+  <h4>{{ p.name }}</h4><div class="h2 mb-1">{{ p.price|kes }}</div><p class="text-muted small flex-fill">{{ p.days }} days featured{% if p.description %} · {{ p.description }}{% endif %}</p>
+  <form method="post" action="{% url 'ads:buy' p.pk %}">{% csrf_token %}
+    <div class="paychoice mb-2"><label><input type="radio" name="payment_method" value="mpesa" checked><span class="pm-ico">M</span><b>M-Pesa</b></label><label><input type="radio" name="payment_method" value="stripe"><span class="pm-ico">{% icon 'card' %}</span><b>Card</b></label></div>
+    <input class="form-control mb-2" name="mpesa_phone" placeholder="M-Pesa number (e.g. 0712 345 678)" value="{{ shop.phone }}">
+    <button class="btn btn-ny w-100" {% if pending %}disabled{% endif %}>Buy this plan</button></form>
+</div></div>{% empty %}<p class="text-muted">No advertising plans are on sale right now.</p>{% endfor %}</div>
+
+{% if history %}<div class="glass p-4"><h5>History</h5><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Plan</th><th>Amount</th><th>Period</th><th>Status</th></tr></thead><tbody>
+{% for h in history %}<tr><td>{{ h.plan.name }}</td><td>{{ h.amount|kes }}</td><td>{% if h.starts_at %}{{ h.starts_at|date:"d M" }} – {{ h.ends_at|date:"d M Y" }}{% else %}—{% endif %}</td><td>{{ h.get_status_display }}</td></tr>{% endfor %}
+</tbody></table></div></div>{% endif %}
+{% endblock %}

@@ -105,7 +105,8 @@ def start_payment(request, order, method, phone=''):
 
 @transaction.atomic
 def mark_paid(payment, receipt='', raw=None, request=None):
-    """Idempotent: calling twice (e.g. callback + polling) does nothing the second time."""
+    """Idempotent: calling twice (e.g. callback + polling) does nothing the second time. Handles both kinds
+    of purchase a Payment can belong to: an order, or (see ads/services.py) a seller's ad-slot promotion."""
     payment = Payment.objects.select_for_update().get(pk=payment.pk)
     if payment.state == PaymentState.SUCCEEDED:
         return payment
@@ -115,6 +116,12 @@ def mark_paid(payment, receipt='', raw=None, request=None):
     if raw is not None:
         payment.raw = raw
     payment.save()
+    if payment.promotion_id:
+        from ads.services import activate
+        activate(payment.promotion, request=request)
+        record('payment.succeeded', target=payment.promotion, request=request, method=payment.method,
+               receipt=payment.receipt, simulated=payment.simulated)
+        return payment
     order = Order.objects.select_for_update().get(pk=payment.order_id)
     if order.status == 'cancelled':
         log.warning('Payment %s succeeded for cancelled order %s: refund needed', payment.pk, order.number)
@@ -144,6 +151,11 @@ def mark_failed(payment, reason='', raw=None, cancelled=False):
     if raw is not None:
         payment.raw = raw
     payment.save()
+    if payment.promotion_id:
+        from ads.services import mark_purchase_failed
+        mark_purchase_failed(payment.promotion, reason)
+        record('payment.failed', target=payment.promotion, method=payment.method, reason=reason)
+        return payment
     order = payment.order
     if order.payment_status != PaymentStatus.PAID:
         order.payment_status = PaymentStatus.FAILED

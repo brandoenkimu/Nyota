@@ -102,12 +102,51 @@ class Command(BaseCommand):
         self._chats(shops, customers, admin)
         self._attendance()
         self._payouts(shops)
+        self._staff_pay()
+        self._monitoring(customers)
         rows = etl.run_etl()
         self.stdout.write(self.style.SUCCESS(f'Warehouse built ({rows} fact rows).'))
         self._summary(shops)
 
     # ------------------------------------------------------------ helpers
+    def _staff_pay(self):
+        from django.core.management import call_command
+        call_command('payroll_defaults', '--shops', verbosity=0)
+
+    def _monitoring(self, customers):
+        """Demo usage data so the analyst Usage page and the error tracker are not empty. Real data replaces it as people use the site."""
+        import hashlib
+        from datetime import timedelta
+        from django.utils import timezone
+        from monitor.models import ActivityEvent, ErrorEvent, ErrorGroup
+        ActivityEvent.objects.all().delete()
+        rnd, now, rows = random.Random(7), timezone.now(), []
+        pages = ['/', '/products/', '/p/sample-product/', '/shops/', '/shop/sample/', '/track/', '/account/', '/account/orders/']
+        for i in range(2500):
+            when = now - timedelta(days=rnd.random() * 30, hours=rnd.choice([8, 9, 10, 12, 13, 17, 18, 19, 20, 21]) - 12)
+            sess = hashlib.sha1(str(rnd.randint(1, 700)).encode()).hexdigest()[:12]
+            dev = rnd.choices(['mobile', 'desktop', 'tablet'], [62, 33, 5])[0]
+            u = rnd.choice(customers) if customers and rnd.random() < .4 else None
+            rows.append(ActivityEvent(created_at=when, user=u, session=sess, kind='view', path=rnd.choice(pages), device=dev, ms=rnd.randint(40, 900)))
+            r = rnd.random()
+            if r < .12:
+                rows.append(ActivityEvent(created_at=when, user=u, session=sess, kind='search', path='/products/', device=dev,
+                                          label=rnd.choice(['kettle', 'football', 'honey', 'laptop', 'sneakers', 'solar lamp', 'ps5']), count=rnd.choice([0, 3, 8, 14])))
+            if r < .06:
+                rows.append(ActivityEvent(created_at=when, user=u, session=sess, kind='add_to_cart', path='/cart/add/', device=dev, label='Demo item'))
+            if r < .022:
+                rows.append(ActivityEvent(created_at=when, user=u, session=sess, kind='order', path='/checkout/', device=dev, label='DEMO'))
+        ActivityEvent.objects.bulk_create(rows)
+        if not ErrorGroup.objects.exists():
+            g = ErrorGroup.objects.create(fingerprint='demo-1', exc_type='ValueError', message='Demo: invalid literal for int()',
+                                          location='orders/views.py:60 in cart_update', sample_path='/cart/update/7/', count=3, users_affected=2,
+                                          traceback='Traceback (most recent call last):\n  ...demo data, not a real error...')
+            for ref in ('NY-DEMO01', 'NY-DEMO02', 'NY-DEMO03'):
+                ErrorEvent.objects.create(group=g, reference=ref, user_label='demo', path='/cart/update/7/', role='customer')
+
     def _wipe(self):
+        from payroll.models import PayProfile, PayrollRun, Payslip
+        Payslip.objects.all().delete(); PayrollRun.objects.all().delete(); PayProfile.objects.all().delete()
         for model in (Review, Payment, TrackingEvent, OrderItem, ShopOrder, Order, Payout, Product, Shop, Coupon, HeroSlide):
             model.objects.all().delete()
         User.objects.filter(is_superuser=False).delete()
@@ -144,6 +183,11 @@ class Command(BaseCommand):
                                        shipping_fee=Decimal(rnd.choice([200, 250, 300])), free_shipping_over=Decimal(rnd.choice([5000, 8000, None]) or 0) or None,
                                        return_policy='Returns accepted within 7 days if the item is unused and in its original packaging.')
             shop.demo_cats = slugs
+            if shop.is_verified:   # demo shops that carry the badge also have an approved verification on file
+                from verification.models import SellerVerification, Status
+                SellerVerification.objects.create(shop=shop, legal_name=owner.get_full_name(), id_number=str(rnd.randint(20000000, 39999999)),
+                                                  kra_pin=f'A{rnd.randint(100000000, 999999999)}Z', business_address=shop.address, status=Status.APPROVED,
+                                                  note='Demo data: no real documents.')
             self._staff(shop, 'Peter' if rnd.random() > .5 else 'Mary', rnd.choice(['Kimani', 'Achieng', 'Mutai', 'Wekesa']), 'manager', owner, f'staff.{shop.slug}@example.com')
             self._staff(shop, 'Lucy', rnd.choice(['Njuguna', 'Adhiambo', 'Sang']), 'cashier', owner, f'cashier.{shop.slug}@example.com')
             shops.append(shop)

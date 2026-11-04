@@ -1,9 +1,12 @@
+import re
+
 from django import forms
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
-from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm, SetPasswordForm
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 
 from core.utils import unique_username
 from shops.models import MemberRole, Shop, ShopStatus
@@ -151,7 +154,7 @@ class SellerSignupForm(CustomerSignupForm):
         user.save()
         Shop.objects.create(
             owner=user, name=d['shop_name'], city=d['city'], phone=d['phone'], contact_email=d['email'],
-            status=ShopStatus.ACTIVE if settings.SHOP_AUTO_APPROVE else ShopStatus.PENDING)
+            status=ShopStatus.ACTIVE if (settings.SHOP_AUTO_APPROVE and not settings.REQUIRE_SELLER_VERIFICATION) else ShopStatus.PENDING)
         return user
 
 
@@ -159,10 +162,61 @@ class PasswordResetRequestForm(BootstrapMixin, forms.Form):
     identifier = forms.CharField(label='Email or username', max_length=254)
 
 
+class StyledSetPasswordForm(BootstrapMixin, SetPasswordForm):
+    """Django's own 'choose a new password' form (used by the forgot-password link), restyled to match
+    every other form on the site (floating labels, show/hide eye icon) instead of the unstyled default."""
+    new_password1 = forms.CharField(label='New password', strip=False,
+                                    widget=forms.PasswordInput(attrs={'autocomplete': 'new-password', 'autofocus': True}))
+    new_password2 = forms.CharField(label='Confirm new password', strip=False,
+                                    widget=forms.PasswordInput(attrs={'autocomplete': 'new-password'}))
+
+
+class StyledPasswordChangeForm(BootstrapMixin, PasswordChangeForm):
+    """The signed-in 'change my password' form (needs the current password), restyled the same way."""
+    old_password = forms.CharField(label='Current password', strip=False,
+                                   widget=forms.PasswordInput(attrs={'autocomplete': 'current-password', 'autofocus': True}))
+    new_password1 = forms.CharField(label='New password', strip=False,
+                                    widget=forms.PasswordInput(attrs={'autocomplete': 'new-password'}))
+    new_password2 = forms.CharField(label='Confirm new password', strip=False,
+                                    widget=forms.PasswordInput(attrs={'autocomplete': 'new-password'}))
+
+
 class ProfileForm(BootstrapMixin, forms.ModelForm):
+    """Shared by every role. A staff member's username/e-mail is a generated company identity tied to
+    their name (see accounts.staffnames.regenerate_staff_identity) rather than free text, so the field
+    is left out for them; everyone else can pick their own, at most once a week."""
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'phone', 'bio', 'avatar']
+        fields = ['username', 'first_name', 'last_name', 'phone', 'bio', 'avatar', 'profile_visibility']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        user = self.instance
+        if user and user.pk and (user.is_platform_staff or user.role == Role.SELLER_STAFF):
+            del self.fields['username']
+        elif 'username' in self.fields:
+            self.fields['username'].help_text = 'Letters, numbers and . @ + - _ only. Can be changed once a week.'
+
+    def clean_username(self):
+        username = self.cleaned_data['username'].strip()
+        if not re.match(r'^[\w.@+-]+$', username):
+            raise ValidationError('Usernames may only contain letters, numbers and . @ + - _')
+        if User.objects.filter(username__iexact=username).exclude(pk=self.instance.pk).exists():
+            raise ValidationError('That username is already taken.')
+        if self.instance.pk and username.lower() != (self.instance.username or '').lower():
+            last = self.instance.last_username_change
+            if last and timezone.now() - last < timezone.timedelta(days=7):
+                wait = 7 - (timezone.now() - last).days
+                raise ValidationError(f'You can change your username again in {wait} day{"s" if wait != 1 else ""}.')
+        return username
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        if 'username' in self.changed_data:
+            user.last_username_change = timezone.now()
+        if commit:
+            user.save()
+        return user
 
 
 class AddressForm(BootstrapMixin, forms.ModelForm):

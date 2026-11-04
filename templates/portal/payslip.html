@@ -1,0 +1,19 @@
+{% extends 'portal/base.html' %}{% load nyota %}
+{% block portal %}
+<div class="page-actions"><button class="btn btn-soft btn-sm" onclick="window.print()">Print</button></div>
+<div class="glass p-4 p-md-5" style="max-width:720px"><div class="d-flex justify-content-between flex-wrap gap-2"><div><h4 class="mb-0">Payslip · {{ slip.run.label }}</h4><div class="text-muted small">{{ slip.user.display_name }} · {{ slip.grade_name }} · {{ slip.category_name }}</div></div><div class="text-end small text-muted">{% if slip.run.shop %}{{ slip.run.shop.name }}{% else %}{{ COMPANY_NAME }}{% endif %}</div></div>
+<hr><div class="small text-muted mb-3">Worked {{ slip.days_present }} of {{ slip.days_expected }} days · {{ slip.hours }} hours{% if slip.overtime_hours %} · {{ slip.overtime_hours }} overtime{% endif %}{% if slip.days_late %} · {{ slip.days_late }} late{% endif %}</div>
+<table class="tbl"><tbody>
+<tr><td>Base ({{ slip.get_employment_type_display|default:slip.employment_type }})</td><td class="text-end">{{ slip.base|kes }}</td></tr>
+<tr><td>{{ slip.category_name }} allowance</td><td class="text-end">{{ slip.category_allowance|kes }}</td></tr>
+{% if slip.fixed_allowance %}<tr><td>Fixed allowance</td><td class="text-end">{{ slip.fixed_allowance|kes }}</td></tr>{% endif %}
+{% if slip.overtime_pay %}<tr><td>Overtime</td><td class="text-end">{{ slip.overtime_pay|kes }}</td></tr>{% endif %}
+{% if slip.adjustment %}<tr><td>Adjustment{% if slip.adjustment_note %}: {{ slip.adjustment_note }}{% endif %}</td><td class="text-end">{{ slip.adjustment|kes }}</td></tr>{% endif %}
+<tr><td><b>Gross pay</b></td><td class="text-end"><b>{{ slip.gross|kes }}</b></td></tr>
+{% if slip.absence_deduction %}<tr><td>Unpaid absence</td><td class="text-end">- {{ slip.absence_deduction|kes }}</td></tr>{% endif %}
+{% if slip.late_deduction %}<tr><td>Lateness</td><td class="text-end">- {{ slip.late_deduction|kes }}</td></tr>{% endif %}
+{% if slip.paye or slip.nssf or slip.shif or slip.housing_levy %}<tr><td>PAYE</td><td class="text-end">- {{ slip.paye|kes }}</td></tr><tr><td>NSSF</td><td class="text-end">- {{ slip.nssf|kes }}</td></tr><tr><td>SHIF</td><td class="text-end">- {{ slip.shif|kes }}</td></tr><tr><td>Housing levy</td><td class="text-end">- {{ slip.housing_levy|kes }}</td></tr>{% endif %}
+<tr><td><b>Net pay</b></td><td class="text-end"><b style="font-size:1.3rem">{{ slip.net|kes }}</b></td></tr></tbody></table>
+{% if slip.pay_phone %}<p class="small text-muted mt-3 mb-0">Paid to M-Pesa {{ slip.pay_phone }}</p>{% endif %}</div>
+{% if editable %}<form method="post" class="glass p-3 mt-4 d-flex flex-wrap gap-2 align-items-end" style="max-width:720px">{% csrf_token %}<div><label class="small text-muted">Adjustment (KES, negative to deduct)</label><input class="form-control" name="adjustment" value="{{ slip.adjustment }}"></div><div class="flex-fill"><label class="small text-muted">Reason</label><input class="form-control" name="note" value="{{ slip.adjustment_note }}"></div><button class="btn btn-ny">Apply</button></form>{% endif %}
+{% endblock %}

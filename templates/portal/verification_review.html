@@ -1,0 +1,31 @@
+{% extends 'portal/base.html' %}{% load nyota %}
+{% block portal %}
+<div class="note warn mb-3">{% icon 'shield' %}<div><b>{{ v.get_status_display }}</b>{% if v.admin_reviewer %}<br>Checked by {{ v.admin_reviewer.display_name }} on {{ v.admin_reviewed_at|date:"d M Y H:i" }}.{% endif %}{% if v.decided_by %}<br>Decided by {{ v.decided_by.display_name }} on {{ v.decided_at|date:"d M Y H:i" }}.{% endif %}{% if v.note %}<br>Note: {{ v.note }}{% endif %}</div></div>
+<div class="row g-4">
+  <div class="col-lg-5"><div class="glass p-4"><h5>{{ v.shop.name }}</h5>
+    <dl class="small mb-0"><dt>Owner</dt><dd>{{ v.shop.owner.display_name }} · {{ v.shop.owner.email }} · {{ v.shop.owner.phone }}</dd>
+    <dt>Type</dt><dd>{{ v.get_business_type_display }}</dd><dt>Legal name</dt><dd>{{ v.legal_name }}</dd><dt>ID number</dt><dd>{{ v.id_number }}</dd>
+    <dt>KRA PIN</dt><dd>{{ v.kra_pin }}</dd>{% if v.business_reg_no %}<dt>Registration no.</dt><dd>{{ v.business_reg_no }}</dd>{% endif %}<dt>Address</dt><dd>{{ v.business_address }}</dd>
+    <dt>Policy accepted</dt><dd>{{ v.policy_accepted_at|date:"d M Y H:i" }} (version {{ v.policy_version }})</dd></dl>
+    <p class="small text-muted mt-3 mb-0">Cross-check the names, ID number and KRA PIN across the documents. They must all match the legal name above.</p>
+  </div></div>
+  <div class="col-lg-7"><div class="glass p-4"><h5>Documents</h5>
+    {% if missing %}<div class="small text-warning mb-2">Missing: {{ missing|join:", " }}</div>{% endif %}
+    {% for d in docs %}<div class="py-3 border-bottom" style="border-color:var(--line)!important">
+      <div class="d-flex align-items-center gap-2"><div class="flex-fill"><b class="small">{{ d.get_kind_display }}</b><div class="small text-muted">{{ d.original_name }} · {{ d.get_status_display }}{% if d.note %} · {{ d.note }}{% endif %}</div></div>
+      <a class="btn btn-soft btn-sm" target="_blank" href="{% url 'portals:verification_file' d.pk %}">Open</a></div>
+      {% if can_decide %}<form method="post" class="d-flex gap-2 mt-2">{% csrf_token %}<input type="hidden" name="doc" value="{{ d.pk }}"><input class="form-control form-control-sm" name="note" placeholder="Note (required to reject)">
+        <button name="action" value="accept_doc" class="btn btn-ny btn-sm">Accept</button><button name="action" value="reject_doc" class="btn btn-ghost btn-sm">Reject</button></form>{% endif %}
+    </div>{% empty %}<p class="text-muted small">No documents.</p>{% endfor %}
+  </div>
+  {% if can_decide %}<div class="glass p-4 mt-4"><h5>Decision</h5>
+    <form method="post">{% csrf_token %}<textarea class="form-control mb-3" name="note" rows="3" placeholder="Note to the seller (needed for 'more information' and 'reject')"></textarea>
+      <div class="d-flex flex-wrap gap-2">
+        {% if not is_ceo and v.status == 'submitted' %}<button name="action" value="check" class="btn btn-ny">Documents are genuine: send to CEO</button>{% endif %}
+        {% if is_ceo %}<button name="action" value="approve" class="btn btn-ny" data-confirm="Approve this seller and make the shop public?">Approve (final)</button>{% endif %}
+        <button name="action" value="info" class="btn btn-soft">Ask for more information</button>
+        <button name="action" value="reject" class="btn btn-ghost" data-confirm="Reject this application?">Reject</button></div></form>
+    {% if not is_ceo %}<p class="small text-muted mt-3 mb-0">Two-person rule: administrators check the documents, but only the CEO can approve a seller.</p>{% endif %}
+  </div>{% endif %}</div>
+</div>
+{% endblock %}

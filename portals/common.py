@@ -70,11 +70,16 @@ def nav_for(user):
             _item('Messages', 'chat:inbox', 'chat'),
             _item('Analytics', 'portals:seller_analytics', 'chart', perm='analytics'),
             _item('Payouts', 'portals:seller_payouts', 'wallet', perm='payouts'),
+            _item('Verification', 'portals:seller_verification', 'shield', perm='verify'),
+            _item('Payroll', 'portals:seller_payroll', 'id', perm='payroll'),
             _item('Team', 'portals:seller_staff', 'users', perm='staff'),
             _item('Attendance', 'portals:seller_attendance', 'clock', perm='attendance'),
             _item('Shop profile', 'portals:seller_profile', 'store', perm='profile'),
+            _item('My payslips', 'portals:my_payslips', 'wallet', perm='payslips'),
             _item('My profile', 'portals:profile', 'user'),
         ]
+        if role == 'seller_owner':
+            items.insert(7, _item('Advertise', 'ads:plans', 'star'))
         return [i for i in items if not i['perm'] or i['perm'] in perms]
     if role == 'admin':
         return [
@@ -88,8 +93,14 @@ def nav_for(user):
             _item('Home slides', 'portals:admin_slides', 'image'),
             _item('Payouts', 'portals:admin_payouts', 'wallet'),
             _item('Payments', 'portals:admin_payments', 'card'),
+            _item('Platform fees', 'portals:admin_platform_fees', 'percent'),
             _item('Attendance', 'portals:admin_attendance', 'clock'),
+            _item('My payslips', 'portals:my_payslips', 'wallet'),
             _item('Audit log', 'portals:admin_audit', 'shield'),
+            _item('Seller verification', 'portals:verification_list', 'verified'),
+            _item('Payroll', 'portals:staff_payroll', 'id'),
+            _item('Error tracker', 'portals:error_list', 'alert'),
+            _item('Find a member', 'portals:member_lookup', 'search'),
             _item('Support chats', 'chat:inbox', 'chat'),
             _item('My profile', 'portals:profile', 'user'),
         ]
@@ -99,6 +110,9 @@ def nav_for(user):
             _item('Customers', 'portals:analyst_customers', 'users'),
             _item('Products & baskets', 'portals:analyst_products', 'tag'),
             _item('Forecast', 'portals:analyst_forecast', 'chart'),
+            _item('Usage analytics', 'portals:analyst_usage', 'pulse'),
+            _item('Data warehouse', 'portals:analyst_warehouse', 'db'),
+            _item('My payslips', 'portals:my_payslips', 'wallet'),
             _item('My profile', 'portals:profile', 'user'),
         ]
     if role == 'developer':
@@ -108,18 +122,27 @@ def nav_for(user):
             _item('Webhooks', 'portals:developer_webhooks', 'plug'),
             _item('API access', 'portals:developer_api', 'key'),
             _item('Warehouse jobs', 'portals:developer_jobs', 'db'),
+            _item('Error tracker', 'portals:error_list', 'alert'),
+            _item('My payslips', 'portals:my_payslips', 'wallet'),
             _item('My profile', 'portals:profile', 'user'),
         ]
     if role == 'ceo':
         return [
             _item('Executive view', 'portals:ceo_home', 'grid'),
             _item('Shops league', 'portals:ceo_shops', 'store'),
+            _item('Seller verification', 'portals:verification_list', 'verified'),
+            _item('Payroll', 'portals:staff_payroll', 'id'),
+            _item('Usage analytics', 'portals:analyst_usage', 'pulse'),
+            _item('My payslips', 'portals:my_payslips', 'wallet'),
             _item('My profile', 'portals:profile', 'user'),
         ]
     if role == 'support':
         return [
             _item('Support desk', 'portals:support_home', 'headset'),
             _item('Chats', 'chat:inbox', 'chat'),
+            _item('Find a member', 'portals:member_lookup', 'search'),
+            _item('Error tracker', 'portals:error_list', 'alert'),
+            _item('My payslips', 'portals:my_payslips', 'wallet'),
             _item('My profile', 'portals:profile', 'user'),
         ]
     return []

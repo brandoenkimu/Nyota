@@ -1,6 +1,7 @@
 import datetime as dt
 from decimal import Decimal
 
+from django.conf import settings
 from django.contrib import messages
 from django.core.cache import cache
 from django.db.models import Count, Q, Sum
@@ -63,8 +64,10 @@ def home(request):
                        so.total, badge(so.status), badge(so.order.payment_status)],
              'url': f'/seller/orders/{so.pk}/'} for so in recent]
     notes = []
-    if shop.status != 'active':
-        notes.append(('warn', 'Your shop is awaiting approval, so customers cannot see it yet. Set it up while you wait.'))
+    if not shop.is_verified and request.user.role == 'seller_owner':
+        notes.append(('warn', 'Verify your shop: upload your ID and business documents under Verification. Until an administrator and the CEO approve them, customers cannot see your shop or you cannot withdraw payouts.'))
+    elif shop.status != 'active':
+        notes.append(('warn', 'Your shop is not public yet. Contact the administrator if you think this is a mistake.'))
     if not shop.has_location:
         notes.append(('info', 'Add your shop location so customers can find you on the map (Shop profile).'))
     return dash(request, f'{shop.name}', kpis, charts,
@@ -323,6 +326,9 @@ def available_balance(shop):
 def payouts(request):
     shop = _shop(request)
     available, earned = available_balance(shop)
+    if not shop.is_verified and settings.REQUIRE_SELLER_VERIFICATION:
+        messages.warning(request, 'Payouts unlock once your shop is verified.')
+        return redirect('portals:seller_verification')
     form = PayoutRequestForm(request.POST or None, available=available,
                              initial={'destination': shop.phone, 'method': 'M-Pesa'})
     if request.method == 'POST' and form.is_valid():

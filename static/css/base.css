@@ -165,6 +165,8 @@ img, svg { max-width: 100%; }
 .form-check-input { background-color: var(--surface-solid); border-color: var(--line-strong); }
 .form-check-input:checked { background-color: var(--accent); border-color: var(--accent); }
 .form-text, .helptext { color: var(--faint); font-size: .82rem; }
+.form-text ul, .helptext ul { margin: .25rem 0 0; padding-left: 1.1rem; }
+.form-text ul li, .helptext ul li { margin-bottom: .15rem; }
 .invalid-feedback, .errorlist { color: #f87171; font-size: .85rem; list-style: none; padding: 0; margin: .25rem 0 0; display: block; }
 input[type=color].form-control { padding: .3rem; height: 46px; }
 .field { margin-bottom: 1rem; }

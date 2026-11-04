@@ -11,7 +11,8 @@ class PaymentState(models.TextChoices):
 
 
 class Payment(models.Model):
-    order = models.ForeignKey('orders.Order', on_delete=models.CASCADE, related_name='payments')
+    order = models.ForeignKey('orders.Order', null=True, blank=True, on_delete=models.CASCADE, related_name='payments')
+    promotion = models.ForeignKey('ads.Promotion', null=True, blank=True, on_delete=models.CASCADE, related_name='payments')
     method = models.CharField(max_length=10)
     state = models.CharField(max_length=12, choices=PaymentState.choices, default=PaymentState.INITIATED, db_index=True)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
@@ -35,6 +36,10 @@ class Payment(models.Model):
 
     def __str__(self):
         return f'{self.method} {self.amount} {self.state}'
+
+    @property
+    def target(self):
+        return self.order or self.promotion
 
 
 class WebhookLog(models.Model):

@@ -1,6 +1,6 @@
 {% extends 'base.html' %}{% load static nyota %}
 {% block title %}Track an order{% endblock %}
-{% block extra_head %}<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">{% endblock %}
+{% block extra_head %}{% vendor_css 'leaflet/leaflet.css' 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css' %}{% endblock %}
 {% block content %}<div class="ny-container page-head" style="max-width:920px">
   <span class="sec-kicker">Order tracking</span><h1>Where is my order?</h1>
   <form class="glass p-4 mb-4 row g-3" method="get">
@@ -12,4 +12,4 @@
   {% if error %}<div class="note bad">{% icon 'x' %}<div>{{ error }}</div></div>{% endif %}
   {% if order %}<h2 class="h4 mb-3">Order {{ order.number }} <small class="text-muted">· placed {{ order.placed_at|date:"d M Y" }}</small></h2>{% include 'partials/tracking.html' %}{% endif %}
 </div>{% endblock %}
-{% block js %}{% if order %}<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script><script src="{% static 'js/trackmap.js' %}"></script>{% endif %}{% endblock %}
+{% block js %}{% if order %}{% vendor_js 'leaflet/leaflet.js' 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js' %}<script src="{% static 'js/trackmap.js' %}"></script>{% endif %}{% endblock %}

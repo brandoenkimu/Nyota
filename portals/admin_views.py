@@ -4,7 +4,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.db.models import Count, Q, Sum
-from django.db.models.functions import TruncDate
+from django.db.models.functions import TruncDate, TruncMonth
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -19,6 +19,7 @@ from catalog.models import Category
 from core.models import HeroSlide
 from core.notify import notify
 from core.utils import paginate
+from ads.models import Promotion, PromotionStatus
 from orders.models import Coupon, Order, Payout, ShopOrder
 from payments.models import Payment
 from shops.models import Shop, ShopStatus
@@ -368,3 +369,53 @@ def audit(request):
     return listing(request, 'Audit log', ['Time', 'Who', 'Role', 'Action', 'Target', 'IP', 'Details'], rows, page, filters,
                    subtitle='Append-only and tamper-evident. Developers can verify the hash chain.',
                    extra_actions=[('Export CSV', '?export=1&' + request.GET.urlencode())])
+
+
+# ----------------------------------------------------------------- platform fees (how Nyota itself earns)
+@role_required(*ADMIN)
+def platform_fees(request):
+    """Two income streams: the commission cut on every shop's orders, and shop-advertising fees.
+    This is the answer to 'how do we get paid for managing these shops' — nothing here moves money,
+    it just totals what the commission and advertising systems have already recorded."""
+    since90 = timezone.now() - dt.timedelta(days=90)
+    delivered = ShopOrder.objects.exclude(status='cancelled')
+    comm_30 = delivered.filter(created_at__gte=timezone.now() - dt.timedelta(days=30)).aggregate(v=Sum('commission_amount'))['v'] or 0
+    comm_all = delivered.aggregate(v=Sum('commission_amount'))['v'] or 0
+    ads_paid = Promotion.objects.filter(status__in=[PromotionStatus.ACTIVE, PromotionStatus.EXPIRED])
+    ads_30 = ads_paid.filter(created_at__gte=timezone.now() - dt.timedelta(days=30)).aggregate(v=Sum('amount'))['v'] or 0
+    ads_all = ads_paid.aggregate(v=Sum('amount'))['v'] or 0
+    paid_out = Payout.objects.filter(status='paid').aggregate(v=Sum('amount'))['v'] or 0
+    kpis = [
+        kpi('Commission earned (30 days)', comm_30, icon='percent', money=True),
+        kpi('Advertising fees (30 days)', ads_30, icon='star', money=True),
+        kpi('Commission earned (all time)', comm_all, icon='wallet', money=True),
+        kpi('Advertising fees (all time)', ads_all, icon='wallet', money=True),
+        kpi('Paid out to shops (all time)', paid_out, icon='truck', money=True),
+        kpi('Shops currently featured', Promotion.objects.filter(status=PromotionStatus.ACTIVE).count(), icon='verified'),
+    ]
+    comm_series = (delivered.filter(created_at__gte=since90).annotate(m=TruncMonth('created_at')).values('m')
+                  .annotate(v=Sum('commission_amount')).order_by('m'))
+    ads_series = (ads_paid.filter(created_at__gte=since90).annotate(m=TruncMonth('created_at')).values('m')
+                 .annotate(v=Sum('amount')).order_by('m'))
+    months = sorted({r['m'] for r in comm_series} | {r['m'] for r in ads_series})
+    comm_by_m = {r['m']: float(r['v']) for r in comm_series}
+    ads_by_m = {r['m']: float(r['v']) for r in ads_series}
+    charts = [
+        chart('fees', 'bar', 'Platform income by month', [m.strftime('%b %Y') for m in months],
+              [{'label': 'Commission', 'data': [comm_by_m.get(m, 0) for m in months]},
+               {'label': 'Advertising', 'data': [ads_by_m.get(m, 0) for m in months]}], wide=True, money=True),
+    ]
+    top_shops = (delivered.values('shop__name').annotate(v=Sum('commission_amount')).order_by('-v')[:8])
+    srows = [{'cells': [s['shop__name'], s['v']]} for s in top_shops]
+    recent_ads = Promotion.objects.filter(status__in=[PromotionStatus.ACTIVE, PromotionStatus.EXPIRED]).select_related(
+        'shop', 'plan').order_by('-created_at')[:8]
+    arows = [{'cells': [p.shop.name, p.plan.name, p.amount, badge(p.status), p.created_at.strftime('%d %b %Y')]}
+            for p in recent_ads]
+    tables = [
+        table('Top shops by commission earned', ['Shop', 'Commission'], srows, empty='No paid orders yet.'),
+        table('Recent advertising purchases', ['Shop', 'Plan', 'Amount', 'Status', 'Bought'], arows,
+             empty='No shop has bought a featured slot yet.', link_url='/staff/admin/slides/'),
+    ]
+    return dash(request, 'Platform fees', kpis, charts, tables,
+               subtitle='Every shop pays a commission on each order (set per shop) plus an optional fee to be '
+                        'featured on the home page. Payout requests are reviewed on the Payouts page.')

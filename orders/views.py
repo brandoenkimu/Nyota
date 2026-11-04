@@ -46,6 +46,8 @@ def cart_add(request, pk):
         ok = False
     else:
         cart.add(product.pk, qty)
+        from monitor.service import track
+        track(request, 'add_to_cart', product.name[:100])
         msg = f'Added "{product.name}" to your cart.'
         ok = True
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
@@ -123,6 +125,8 @@ def checkout(request):
         if d['save_address'] and not Address.objects.filter(user=user, line1=d['line1'], city=d['city']).exists():
             Address.objects.create(user=user, label='Saved', is_default=not addresses, **address)
         cart.clear()
+        from monitor.service import track
+        track(request, 'order', order.number, count=int(order.total))
         try:
             url = start_payment(request, order, d['payment_method'], d['mpesa_phone'])
         except PaymentError as exc:

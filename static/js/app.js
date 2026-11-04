@@ -16,6 +16,16 @@
   };
   function ls(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { } return null; }
 
+  /* ---------- report browser errors to Nyota support (max 5 per page; sends no form contents) */
+  var errSent = 0;
+  function reportError(message, source, stack) {
+    if (errSent++ >= 5) return;
+    try { fetch('/api/client-error/', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', keepalive: true,
+      body: JSON.stringify({ message: String(message || '').slice(0, 300), source: String(source || '').slice(0, 300), stack: String(stack || '').slice(0, 3000), page: location.pathname }) }); } catch (e) { }
+  }
+  window.addEventListener('error', function (e) { reportError(e.message, (e.filename || '') + ':' + (e.lineno || ''), e.error && e.error.stack); });
+  window.addEventListener('unhandledrejection', function (e) { var r = e.reason || {}; reportError(r.message || r, 'promise', r.stack); });
+
   /* ---------- toasts */
   N.toast = function (msg, kind) {
     var box = $('#toasts'); if (!box) { box = document.createElement('div'); box.id = 'toasts'; box.className = 'ny-toasts'; document.body.appendChild(box); }
@@ -172,7 +182,8 @@
     f.addEventListener('submit', function (e) {
       if (f.dataset.warping || !f.checkValidity() || !window.NyotaWarp) return;
       e.preventDefault(); f.dataset.warping = 1;
-      window.NyotaWarp(function () { f.submit(); }); setTimeout(function () { f.submit(); }, 2500);
+      var sent = false, go = function () { if (!sent) { sent = true; f.submit(); } };
+      window.NyotaWarp(go); setTimeout(go, 1500);
     });
   });
   var errs = $('.auth-card .note.bad, .auth-card .invalid-feedback, .auth-card .errorlist'); if (errs) { var c = $('.auth-card'); c.classList.add('shake'); }

@@ -4,6 +4,9 @@ from . import admin_views as adm
 from . import customer as cus
 from . import exec_views as ex
 from . import seller as sel
+from . import verify_views as ver
+from . import monitor_views as mon
+from . import payroll_views as pay
 
 app_name = 'portals'
 
@@ -63,8 +66,50 @@ urlpatterns = [
     path('staff/admin/payouts/', adm.payouts, name='admin_payouts'),
     path('staff/admin/payouts/<int:pk>/', adm.payout_action, name='admin_payout_action'),
     path('staff/admin/payments/', adm.payments, name='admin_payments'),
+    path('staff/admin/platform-fees/', adm.platform_fees, name='admin_platform_fees'),
     path('staff/admin/attendance/', adm.attendance, name='admin_attendance'),
     path('staff/admin/audit/', adm.audit, name='admin_audit'),
+
+    # ---- seller verification
+    path('seller/verification/', ver.seller_verification, name='seller_verification'),
+    path('seller/verification/doc/<int:pk>/delete/', ver.seller_doc_delete, name='seller_doc_delete'),
+    path('verification/file/<int:pk>/', ver.document_file, name='verification_file'),
+    path('staff/verifications/', ver.review_list, name='verification_list'),
+    path('staff/verifications/<int:pk>/', ver.review_detail, name='verification_detail'),
+
+    # ---- errors, member timeline, usage
+    path('staff/errors/', mon.error_list, name='error_list'),
+    path('staff/errors/<int:pk>/', mon.error_detail, name='error_detail'),
+    path('staff/members/', mon.member_lookup, name='member_lookup'),
+    path('staff/members/<int:pk>/', mon.member_timeline, name='member_timeline'),
+    path('staff/analyst/usage/', mon.analyst_usage, name='analyst_usage'),
+    path('staff/analyst/warehouse/', mon.analyst_warehouse, name='analyst_warehouse'),
+
+    # ---- payroll (staff: /staff/payroll/, a shop owner: /seller/payroll/)
+    path('me/payslips/', pay.my_payslips, name='my_payslips'),
+    path('me/payslips/<int:pk>/', pay.my_payslip, name='my_payslip'),
+    path('staff/payroll/', pay.home, name='staff_payroll'),
+    path('staff/payroll/run/<int:pk>/', pay.run_detail, name='staff_payroll_run'),
+    path('staff/payroll/slip/<int:pk>/', pay.slip_detail, name='staff_payroll_slip'),
+    path('staff/payroll/grades/', pay.grades, name='staff_payroll_grades'),
+    path('staff/payroll/grades/new/', pay.grade_edit, name='staff_payroll_grade_new'),
+    path('staff/payroll/grades/<int:pk>/', pay.grade_edit, name='staff_payroll_grade'),
+    path('staff/payroll/categories/', pay.categories, name='staff_payroll_categories'),
+    path('staff/payroll/categories/new/', pay.category_edit, name='staff_payroll_category_new'),
+    path('staff/payroll/categories/<int:pk>/', pay.category_edit, name='staff_payroll_category'),
+    path('staff/payroll/people/', pay.people, name='staff_payroll_people'),
+    path('staff/payroll/people/<int:user_pk>/', pay.person_edit, name='staff_payroll_person'),
+    path('seller/payroll/', pay.home, name='seller_payroll'),
+    path('seller/payroll/run/<int:pk>/', pay.run_detail, name='seller_payroll_run'),
+    path('seller/payroll/slip/<int:pk>/', pay.slip_detail, name='seller_payroll_slip'),
+    path('seller/payroll/grades/', pay.grades, name='seller_payroll_grades'),
+    path('seller/payroll/grades/new/', pay.grade_edit, name='seller_payroll_grade_new'),
+    path('seller/payroll/grades/<int:pk>/', pay.grade_edit, name='seller_payroll_grade'),
+    path('seller/payroll/categories/', pay.categories, name='seller_payroll_categories'),
+    path('seller/payroll/categories/new/', pay.category_edit, name='seller_payroll_category_new'),
+    path('seller/payroll/categories/<int:pk>/', pay.category_edit, name='seller_payroll_category'),
+    path('seller/payroll/people/', pay.people, name='seller_payroll_people'),
+    path('seller/payroll/people/<int:user_pk>/', pay.person_edit, name='seller_payroll_person'),
 
     # ---- analyst
     path('staff/analyst/', ex.analyst_home, name='analyst_home'),

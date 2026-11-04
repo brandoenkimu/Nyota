@@ -43,6 +43,24 @@ CURRENCY = env('CURRENCY', 'KES')
 PLATFORM_COMMISSION_PERCENT = float(env('PLATFORM_COMMISSION_PERCENT', '8'))
 SHOP_AUTO_APPROVE = env_bool('SHOP_AUTO_APPROVE', DEBUG)
 REQUIRE_VERIFIED_EMAIL = env_bool('REQUIRE_VERIFIED_EMAIL', not DEBUG)    # needed before checkout
+# Payroll. Statutory figures are DEFAULTS for Kenya: confirm the current KRA / NSSF / SHA rates before paying real staff.
+PAYROLL = {
+    'WORK_DAYS_PER_WEEK': int(env('PAYROLL_WORK_DAYS_PER_WEEK', '5')),     # 5 = Monday to Friday
+    'DAY_HOURS': float(env('PAYROLL_DAY_HOURS', '8')),
+    'OVERTIME_MULTIPLIER': float(env('PAYROLL_OVERTIME_MULTIPLIER', '1.5')),
+    'DEDUCT_ABSENCE': env_bool('PAYROLL_DEDUCT_ABSENCE', True),
+    'LATE_PENALTY': float(env('PAYROLL_LATE_PENALTY', '0')),               # KES deducted per late day
+    'PAYE_BANDS': [(24000, 0.10), (32333, 0.25), (500000, 0.30), (800000, 0.325), (None, 0.35)],
+    'PERSONAL_RELIEF': float(env('PAYROLL_PERSONAL_RELIEF', '2400')),
+    'NSSF_RATE': float(env('PAYROLL_NSSF_RATE', '0.06')),
+    'NSSF_UPPER_LIMIT': float(env('PAYROLL_NSSF_UPPER_LIMIT', '108000')),
+    'SHIF_RATE': float(env('PAYROLL_SHIF_RATE', '0.0275')),
+    'SHIF_MIN': float(env('PAYROLL_SHIF_MIN', '300')),
+    'HOUSING_LEVY_RATE': float(env('PAYROLL_HOUSING_LEVY_RATE', '0.015')),
+}
+# Sellers must pass document verification (admin check + CEO approval) before their shop can be public.
+REQUIRE_SELLER_VERIFICATION = env_bool('REQUIRE_SELLER_VERIFICATION', True)
+PRIVATE_MEDIA_ROOT = BASE_DIR / 'private_media'      # verification documents: never served as public media
 WORK_START = time(int(env('WORK_START_HOUR', '8')), int(env('WORK_START_MINUTE', '30')))
 
 # ------------------------------------------------------------------ apps
@@ -67,6 +85,10 @@ INSTALLED_APPS = [
     'chat',
     'analytics',
     'audit',
+    'verification',
+    'monitor',
+    'payroll',
+    'ads',
     'portals',
     'api',
 ]
@@ -83,6 +105,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'audit.middleware.AuditContextMiddleware',
     'accounts.middleware.AccountStateMiddleware',
+    'monitor.middleware.MonitorMiddleware',
     'core.middleware.MembersOnlyMiddleware',
 ]
 
@@ -135,7 +158,9 @@ CELERY_BEAT_SCHEDULE = {
     'nightly-warehouse-build': {'task': 'analytics.tasks.run_etl_task',
                                 'schedule': 60 * 60 * 6},
     'expire-unpaid-orders': {'task': 'orders.tasks.expire_unpaid_orders_task', 'schedule': 60 * 15},
+    'purge-monitoring': {'task': 'monitor.tasks.purge_old_monitoring', 'schedule': 60 * 60 * 24},
     'low-stock-alerts': {'task': 'catalog.tasks.low_stock_alerts', 'schedule': 60 * 60 * 12},
+    'expire-promotions': {'task': 'ads.tasks.expire_promotions_task', 'schedule': 60 * 30},
 }
 
 # ----------------------------------------------------------------- auth

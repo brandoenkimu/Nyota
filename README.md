@@ -1,46 +1,45 @@
-# ✦ Nyota: a multi-vendor marketplace where every shop is a star
+# ✦ Nyota — a multi-vendor marketplace where every shop is a star
 
 Django 5.2 · Channels (live chat) · Celery · PostgreSQL/SQLite · Bootstrap 5 + a custom design system
 
-Nyota lets sellers open verified shops, customers buy with M-Pesa, card or cash on delivery, and staff run the
-platform through role-based portals. It also includes a data warehouse for analysts, a full audit trail, error
-tracking for support, and payroll for staff.
+## Honest status — read this first
 
-## Honest status
+This project was written in a sandbox **with no access to PyPI**, so Django itself could never be installed
+there. What *was* verified: every Python file compiles, the 35 data-mining unit tests pass, every `{% url %}`,
+template include, static file and icon name resolves, template tags are balanced, the generated artwork is valid
+XML, and the CSS was rendered in a real browser (screenshots of home, login and dashboard in three themes).
+What was **not** possible: running `manage.py`, so **expect a small number of first-run fixes** (a typo, a missing
+import). Send me the traceback and it is usually a one-line fix. Migrations were deliberately not generated; you
+create them on your machine (step 4).
 
-This project was built in a sandbox with no access to PyPI, so some code could only be checked by compiling it, not by running it.
-
-* Verified: Python and JavaScript files compile, the data-mining unit tests pass, and templates, URLs and static files resolve.
-* Not verified: a full `manage.py` run. Expect a few first-run fixes (a typo or a missing import). Send the traceback and it is usually a one-line fix.
-* Migrations are not pre-generated. Create them on your machine (see Run it).
-* Google/GitHub/Microsoft login, M-Pesa and Stripe need your own developer keys. Without keys the site runs in **demo mode** (a "Simulate payment" screen), and the social login buttons do not appear.
-* Real product photos cannot be bundled. Generated artwork is shown until a seller uploads a photo.
+Also be aware:
+* **Real product photos** cannot be bundled. Until a seller uploads one, each product shows generated artwork that
+  matches its category, so no card is ever empty. `fetch_product_images` (step 7) pulls matching free photos from
+  Wikimedia Commons on *your* machine; items without a confident match keep the artwork and are listed for you.
+* **Google/GitHub/Microsoft login, M-Pesa and Stripe** need *your* developer keys. Without keys the site runs in
+  **demo mode** (a "Simulate payment" screen), and the login buttons simply don't appear.
 
 ## What is inside
 
 | Area | Features |
 |---|---|
-| Storefront | Hero carousel, scroll rails, shop constellation, search suggestions, filters, product gallery, reviews, wishlist, 10 themes × 10 accents, twinkling starfield |
-| Seller sites | Each shop has `/shop/<slug>/` with banner, colour, about, hours, social links, map pin, follow and chat buttons |
-| Seller verification | Sellers upload supporting documents (ID, business registration, tax and permit papers). Admins and CEOs review and approve them in a review queue. Unverified shops cannot sell, which protects buyers from scams |
-| Orders | Cart per shop, coupons, checkout with map delivery pin, orders split per seller, commission snapshot, stock locking |
-| Order safety | Sellers only see orders that are paid or pay-on-delivery. Customers can cancel an unpaid order (stock is restored). Unpaid online orders auto-cancel after 60 minutes via Celery. Late payments on cancelled orders are flagged in the audit log for refund |
-| Tracking | Seller or admin moves each part through pending → delivered with dated events and map points. Customers see a stepper, timeline and journey map. Public lookup at `/track/` |
-| Payments | M-Pesa Daraja STK push, Stripe Checkout with webhook, cash on delivery, idempotent confirmation, demo mode |
-| Chat | Customer ↔ seller ↔ admin/support with reply, react, soft delete, emoji. WebSocket with HTTP polling fallback |
-| Portals | Customer, Seller owner, Seller staff, Admin, Analyst, Developer, CEO, Support |
-| Public profiles | Directional profile pages: customers see other customers, and staff see other staff, with each view limited by who is looking at whom |
-| Identity | Three login doors (`/login/`, `/seller/login/`, `/staff/login/`), staff identities generated from name + position + company, forced password change on first login |
-| Accounts | Email verification, password recovery, social login, lockout after 5 failed attempts |
-| Themes | Auto (follows the device), saved per device, falls back to the account setting, no wrong-theme flash on load |
-| Login transition | The warp animation is capped so the redirect never hangs |
+| Storefront | Hero carousel, scroll rails, shop "constellation", search suggestions, filters, product gallery, reviews, wishlist, 10 themes × 10 accents, twinkling starfield + shooting stars |
+| Seller sites | Each shop gets its own page `/shop/<slug>/` with banner, colour, about, hours, social links, **map pin and directions**, follow button, chat button |
+| Orders | Cart per shop, coupons, checkout with **map delivery pin**, orders split per seller (commission snapshot), stock locking |
+| Tracking | Seller **or admin** moves each part through pending → delivered with dated events + map points; customers see a stepper, timeline and journey map; public lookup by order no. + phone at `/track/` |
+| Payments | M-Pesa Daraja STK push (+ callback), Stripe Checkout (+ webhook), cash on delivery, idempotent confirmation, demo mode |
+| Chat | Customer ↔ seller ↔ admin/support: **reply, react, delete (soft), emoji**, WebSocket with HTTP polling fallback |
+| Portals | Customer, Seller owner, **Seller staff (assistants, permission per position)**, Admin, Analyst, Developer, CEO, Support |
+| Identity | Three login doors (`/login/`, `/seller/login/`, `/staff/login/`); staff usernames/emails generated from **name + position + company** (e.g. `jane.kamau.ceo@nyota.market`, `lucy.sang.cashier@savanna-tech.nyota.market`); forced password change on first login |
+| Accounts | Email verification, password recovery, login with Google/GitHub/Microsoft, lockout after 5 failures |
 | Staff | Attendance (clock in/out, lateness), shop team management |
-| Payroll | Pay grades by rank and job category, payroll runs and payslips for staff |
-| Analytics | Star-schema warehouse (`DimDate/Shop/Product/Customer`, `FactSales`), activity events, and mining: RFM segments, market-basket rules, ABC/Pareto, forecasting, anomaly detection, review sentiment |
-| Audit | Append-only audit log with a SHA-256 hash chain and an integrity check in the Developer portal |
-| Error tracking | `ErrorLog` with server middleware and client-side error reporting. Support staff and admins can trace a user's problem and see it next to the audit trail |
-| API | `/api/v1/products/`, `/api/v1/shops/`, `/api/v1/orders/`, `/api/v1/me/`, `/api/health/` with token auth |
-| Performance | Third-party CSS/JS (Bootstrap, Leaflet, Chart.js) can be served locally and otherwise load without blocking the page |
+| Audit | Append-only audit log with a SHA-256 hash chain and an integrity check (Developer portal) |
+| Seller verification | Sellers upload ID, KRA PIN, address proof (+ company registration) and accept the anti-fraud policy; an **administrator checks, the CEO approves** (two-person rule); only then is the shop public and payouts unlock. Documents are stored privately and every view is audited |
+| Profiles | `/people/<username>/`: what you see depends on the relationship (customer card, shop to its customers, colleagues, Nyota team) and on each member's privacy setting |
+| Usage & errors | Page views, searches, cart/order steps feed the analyst **Usage** and **Data warehouse** pages; every crash gets a reference (NY-XXXXXX) that support can search, grouped into tickets in the **Error tracker**; browser JS errors are reported too; support can open a member's **timeline** (activity, errors, audit trail) |
+| Payroll | Ranks (base salary) x job categories (% allowance) + overtime, minus absence, lateness and PAYE/NSSF/SHIF/housing levy. Platform staff: administrator prepares, CEO approves. Each shop owner runs their own team's payroll. Staff read payslips under *My payslips* |
+| Analytics | Star-schema warehouse (`DimDate/Shop/Product/Customer`, `FactSales`) + mining: RFM segments, market-basket rules, ABC/Pareto, Holt forecast, anomaly detection, review sentiment |
+| API | `/api/v1/products/`, `/api/v1/shops/`, `/api/v1/orders/` (yours), `/api/v1/me/`, `/api/health/` with token auth |
 
 ## Run it on Windows (PowerShell)
 
@@ -54,83 +53,81 @@ pip install -r requirements.txt
 
 copy .env.example .env               # then edit .env: at least set SECRET_KEY
 
-python manage.py makemigrations accounts shops catalog orders payments chat audit analytics core
+# 4. create the database tables (migrations were not pre-generated)
+python manage.py makemigrations
 python manage.py migrate
 
-python manage.py seed_demo           # demo staff, shops, products, orders, chats, warehouse
+# 5. demo data: staff for every role, 6 shops, ~45 products, ~220 orders, chats, reviews, warehouse
+python manage.py seed_demo
+python manage.py payroll_defaults --shops   # default ranks, categories and pay profiles (seed_demo already does this)
+python manage.py fetch_vendor               # optional: store Bootstrap/Leaflet/Chart.js locally so pages never wait for a CDN
 python manage.py createsuperuser     # optional, for /django-admin/
 
+# 6. run (Daphne serves HTTP + WebSockets)
 python manage.py runserver
 ```
 
-Open <http://localhost:8000>. `seed_demo` prints every demo login at the end; they share the password `Nyota@2026!`.
-Use separate browsers or profiles so sessions do not clash.
+Open <http://localhost:8000>. `seed_demo` prints every demo login at the end; they all share the password
+`Nyota@2026!`. Try, in separate browsers/profiles so sessions don't clash:
 
-Optional commands:
+* Customer `/login/` · Seller `/seller/login/` · Staff `/staff/login/` (admin, analyst, developer, ceo, support)
+* As a seller, update an order's tracking → the customer's order page updates with dates and map.
+* As a customer, message a shop; the seller replies from **Messages** in real time.
 
 ```powershell
-python manage.py fetch_vendor             # download Bootstrap/Leaflet/Chart.js into static/vendor
-python manage.py fetch_product_images     # real product photos from Wikimedia Commons
-python manage.py expire_unpaid_orders     # cancel abandoned unpaid orders now
+# 7. (optional) real product photos from Wikimedia Commons: run on your machine
+python manage.py fetch_product_images --dry-run
+python manage.py fetch_product_images
 ```
 
 ### Optional: Redis, Celery, Postgres
 
-* `REDIS_URL=redis://localhost:6379/0` enables live chat across processes and a real Celery worker:
+* `REDIS_URL=redis://localhost:6379/0` enables live chat across several processes and a real Celery worker:
   `celery -A config worker -B -l info`. Without it, chat uses an in-memory layer and Celery runs inline.
-  Celery beat runs the unpaid-order expiry every 15 minutes.
-* `DATABASE_URL=postgres://user:pass@localhost:5432/nyota` switches from SQLite to PostgreSQL.
-* Or run everything with `docker compose up --build`.
+* `DATABASE_URL=postgres://user:pass@localhost:5432/nyota` switches from SQLite to PostgreSQL (full-text search
+  turns on automatically).
+* Or everything at once: `docker compose up --build` (Postgres + Redis + web + worker), then run
+  `docker compose exec web python manage.py makemigrations ...` the first time.
 
 ## Turning on real integrations
 
 | Feature | What you need |
 |---|---|
-| Google sign-in | Google Cloud OAuth client; redirect URI `http://localhost:8000/oauth/google/callback/`; set `GOOGLE_CLIENT_ID/SECRET` |
-| M-Pesa | Safaricom Daraja app, `MPESA_*` keys, and a public HTTPS `MPESA_CALLBACK_URL` (use ngrok locally) |
-| Stripe | `STRIPE_SECRET_KEY`, and `stripe listen --forward-to localhost:8000/payments/stripe/webhook/` |
+| Google sign-in | Google Cloud → OAuth client; redirect URI `http://localhost:8000/oauth/google/callback/`; set `GOOGLE_CLIENT_ID/SECRET` |
+| M-Pesa | Safaricom Daraja app (sandbox is fine), `MPESA_*` keys, and `MPESA_CALLBACK_URL` = your public HTTPS **base URL only** (e.g. `https://abc.ngrok-free.app`, use ngrok locally); the app appends `/payments/mpesa/callback/<token>/` itself |
+| Stripe | `STRIPE_SECRET_KEY`, and `stripe listen --forward-to localhost:8000/payments/stripe/webhook/` for the secret |
 | Email | `EMAIL_HOST…`; with none set, emails print in the terminal |
-| Shop subdomains | `ROOT_DOMAIN=yourdomain.com` plus wildcard DNS |
+| Shop subdomains | `ROOT_DOMAIN=yourdomain.com` + wildcard DNS: `slug.yourdomain.com` opens that shop |
 
-Tunable setting: `PAYABLE_AFTER_MINUTES = 60` in `orders/services.py` (abandoned-order window).
+## Hosting later
 
-## Privacy and security notes
-
-* Seller verification documents are sensitive. They live in `media/`, which is git-ignored. Use private storage in production and never commit them.
-* Never commit `.env`. Commit only `.env.example`.
-* Before going live: `DEBUG=False`, a long `SECRET_KEY`, `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS`, HTTPS, then `python manage.py check --deploy`.
-
-## Hosting
-
-`Dockerfile`, `docker-compose.yml`, `Procfile` and `render.yaml` are included. Static files are served by WhiteNoise.
-Uploaded media needs persistent storage or S3.
+`Dockerfile`, `docker-compose.yml`, `Procfile` and `render.yaml` are included. For production set
+`DEBUG=False`, a long `SECRET_KEY`, `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS`, `DATABASE_URL`, `REDIS_URL`, and run behind HTTPS.
+Static files are served by WhiteNoise; uploaded media (`MEDIA_ROOT`) needs persistent storage or S3.
 
 ## Tests
 
 ```powershell
-python manage.py test
+python manage.py test            # Django tests + 35 data-mining tests
 ```
 
 ## Project map
 
 ```
 config/      settings, ASGI (HTTP + WebSocket), Celery
-accounts/    users, roles, staff identities, OAuth, verification, attendance, payroll
-shops/       shop profiles, team permissions, seller verification
-catalog/     products, reviews, search
-orders/      cart, checkout, split orders, tracking, cancel and expiry
-payments/    M-Pesa, Stripe, webhooks
-chat/        conversations, consumers, HTTP API
-audit/       hash-chained audit log
-analytics/   warehouse ETL, activity events, data mining
-portals/     every dashboard and review queue
-core/        storefront, themes, artwork, error tracking, seed_demo
-api/         REST
+accounts/    users, roles, staff identities, OAuth, email verification, attendance
+shops/       shop profiles, team permissions        catalog/   products, reviews, search
+orders/      cart, checkout, split orders, tracking  payments/  M-Pesa, Stripe, webhooks
+chat/        conversations, consumers, HTTP API      audit/     hash-chained audit log
+analytics/   warehouse ETL + data mining             portals/   every dashboard
+core/        storefront, theme system, SVG artwork, seed_demo   api/  REST
 templates/ static/   the interface
 ```
+
 
 ##  CLONE
 ```powershell
 git clone https://github.com/brandoenkimu/Nyota.git
 cd Nyota
 ```
+=======

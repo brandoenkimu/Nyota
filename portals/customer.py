@@ -7,8 +7,11 @@ from django.views.decorators.http import require_POST
 
 from accounts.forms import AddressForm, ProfileForm
 from accounts.models import Address
+from accounts.staffnames import regenerate_staff_identity
+from audit.service import record
 from catalog.models import Product, Wishlist
 from core.models import Notification
+from core.notify import notify
 from core.utils import paginate
 from orders.models import FLOW, Order, OrderItem, ShopOrder, ShopOrderStatus
 from orders.services import OrderError, cancel_shop_order
@@ -144,10 +147,31 @@ def address_delete(request, pk):
 def profile(request):
     from accounts.models import Attendance
     from django.utils import timezone
+    old_first, old_last = request.user.first_name, request.user.last_name
+    old_username = request.user.username
     form = ProfileForm(request.POST or None, request.FILES or None, instance=request.user)
     if request.method == 'POST' and form.is_valid():
-        form.save()
-        messages.success(request, 'Profile updated.')
+        user = form.save()
+        name_changed = user.first_name != old_first or user.last_name != old_last
+        if name_changed and (user.is_platform_staff or user.role == 'seller_staff'):
+            result = regenerate_staff_identity(user)
+            if result:
+                new_username, new_email = result
+                record('auth.identity_regenerated', target=user, request=request, actor=user,
+                      old_username=old_username, new_username=new_username)
+                notify(user, 'Your sign-in details changed',
+                      f'Because your name changed, your login is now {new_username} ({new_email}). '
+                      'Your old sign-in no longer works.', '/profile/')
+                messages.success(request, f'Profile updated. Your sign-in details changed to match your new '
+                                          f'name — use {new_username} next time you log in.')
+            else:
+                messages.success(request, 'Profile updated.')
+        elif 'username' in form.changed_data:
+            record('auth.username_changed', target=user, request=request, actor=user,
+                  old=old_username, new=user.username)
+            messages.success(request, 'Profile updated. Your new username is active right away.')
+        else:
+            messages.success(request, 'Profile updated.')
         return redirect('portals:profile')
     today = None
     if request.user.is_platform_staff or request.user.is_seller_side:

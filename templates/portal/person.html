@@ -1,0 +1,14 @@
+{% extends 'portal/base.html' %}{% load nyota %}
+{% block portal %}
+<div class="glass p-4 p-md-5" style="max-width:640px">
+  <div class="d-flex align-items-center gap-3 mb-3">
+    {% if p.avatar %}<img src="{{ p.avatar.url }}" alt="" style="width:72px;height:72px;border-radius:50%;object-fit:cover">{% else %}<span class="avatar" style="width:72px;height:72px;font-size:1.6rem">{{ p.initials }}</span>{% endif %}
+    <div><h3 class="mb-0">{{ p.display_name }}</h3><div class="text-muted small">{% if p.role == 'customer' %}Customer{% elif p.is_platform_staff %}Nyota team · {{ p.get_role_display }}{% else %}{{ p.get_role_display }}{% endif %} · member since {{ p.date_joined|date:"M Y" }}</div></div></div>
+  {% if p.bio %}<p>{{ p.bio }}</p>{% endif %}
+  {% if reviews is not None %}<p class="small text-muted">{{ reviews }} review{{ reviews|pluralize }} written</p>{% endif %}
+  {% if facts %}<dl class="row small mb-3">{% for k, v in facts %}<dt class="col-sm-5 text-muted">{{ k }}</dt><dd class="col-sm-7">{{ v }}</dd>{% endfor %}</dl>{% endif %}
+  <div class="d-flex flex-wrap gap-2">{% if can_message %}<a class="btn btn-ny" href="{% url 'chat:start_user' p.pk %}">{% icon 'chat' %} Message</a>{% endif %}
+    {% if level == 'full' and user.role == 'admin' %}<a class="btn btn-soft" href="{% url 'portals:admin_user_edit' p.pk %}">Manage account</a>{% endif %}
+    {% if level == 'full' and user.role in 'admin support' and user.pk != p.pk %}<a class="btn btn-soft" href="{% url 'portals:member_timeline' p.pk %}">Activity &amp; errors</a>{% endif %}</div>
+  <p class="small text-muted mt-3 mb-0">You are seeing what your relationship with this person allows.{% if user.pk == p.pk %} Change who can see your card under Profile &amp; themes.{% endif %}</p>
+</div>{% endblock %}

@@ -95,6 +95,9 @@ def _filtered_products(request, base):
 def product_list(request):
     qs = _filtered_products(request, _live_products())
     page = paginate(request, qs, 24)
+    if request.GET.get('q', '').strip():
+        from monitor.service import track
+        track(request, 'search', request.GET['q'].strip().lower()[:100], count=page.paginator.count)
     return render(request, 'core/products.html', {
         'page': page, 'products': page.object_list, 'categories': Category.objects.filter(parent__isnull=True),
         'sorts': SORTS, 'q': request.GET.get('q', ''), 'current_category': request.GET.get('category', ''),
@@ -302,6 +305,11 @@ def about(request):
 
 def terms(request):
     return render(request, 'core/legal.html', {'kind': 'terms'})
+
+
+def seller_policy(request):
+    from verification.models import POLICY_VERSION
+    return render(request, 'core/seller_policy.html', {'policy_version': POLICY_VERSION})
 
 
 def privacy(request):

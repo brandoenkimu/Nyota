@@ -1,7 +1,7 @@
 {% extends 'base.html' %}{% load static nyota %}
 {% block title %}{{ page_title|default:portal_name }}{% endblock %}
 {% block css %}<link rel="stylesheet" href="{% static 'css/public.css' %}"><link rel="stylesheet" href="{% static 'css/portal.css' %}"><link rel="stylesheet" href="{% static 'css/chat.css' %}">{% endblock %}
-{% block extra_head %}<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">{% endblock %}
+{% block extra_head %}{% vendor_css 'leaflet/leaflet.css' 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css' %}{% endblock %}
 {% block body_class %}portal{% endblock %}
 {% block chrome_top %}{% endblock %}{% block chrome_bottom %}{% endblock %}
 {% block content %}
@@ -36,5 +36,5 @@
     </div>
   </div>
 </div>{% endblock %}
-{% block js %}<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+{% block js %}{% vendor_js 'leaflet/leaflet.js' 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js' %}{% vendor_js 'chart/chart.umd.min.js' 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js' %}
 <script src="{% static 'js/maps.js' %}"></script><script src="{% static 'js/charts.js' %}"></script>{% block pjs %}{% endblock %}{% endblock %}

@@ -1,7 +1,7 @@
 {% extends 'base.html' %}{% load static nyota %}
 {% block title %}{{ shop.name }}{% endblock %}
 {% block description %}{{ shop.tagline }}{% endblock %}
-{% block extra_head %}<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css"><style>:root{--shop:{{ shop.brand_color }}}</style>{% endblock %}
+{% block extra_head %}{% vendor_css 'leaflet/leaflet.css' 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css' %}<style>:root{--shop:{{ shop.brand_color }}}</style>{% endblock %}
 {% block content %}<div class="ny-container" style="--c:{{ shop.brand_color }}">
   {% if preview %}<div class="note warn mt-3">{% icon 'eye' %}<div>Preview only. This shop is <b>{{ shop.get_status_display|lower }}</b> and not visible to customers yet.</div></div>{% endif %}
   <section class="shop-hero">
@@ -38,4 +38,4 @@
     </aside>
   </div>
 </div>{% endblock %}
-{% block js %}<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script><script src="{% static 'js/maps.js' %}"></script>{% endblock %}
+{% block js %}{% vendor_js 'leaflet/leaflet.js' 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js' %}<script src="{% static 'js/maps.js' %}"></script>{% endblock %}

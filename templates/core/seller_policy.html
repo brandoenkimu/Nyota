@@ -1,0 +1,13 @@
+{% extends 'base.html' %}{% load nyota %}
+{% block title %}Seller verification &amp; anti-fraud policy{% endblock %}
+{% block content %}<div class="ny-container page-head" style="max-width:780px">
+  <h1>Seller Verification &amp; Anti-Fraud Policy</h1><p class="text-muted">Version {{ policy_version }}</p>
+  <div class="note warn">{% icon 'shield' %}<div>Template text. Have a lawyer review it, and adapt it to your company and local law before launch.</div></div>
+  <h4>1. Why we verify</h4><p>{{ COMPANY_NAME }} protects buyers from scams. No shop can sell publicly until the person or business behind it has been identified and approved.</p>
+  <h4>2. What we ask for</h4><p>A government ID (front and back), a selfie holding that ID, a KRA PIN certificate, proof of business address and, for registered companies, the registration certificate. Business permits are welcome as extra proof.</p>
+  <h4>3. Who reviews</h4><p>An administrator checks that documents are genuine and match your details. The CEO then gives the final approval. Nobody can approve their own request, and every view, decision and change is recorded in a tamper-evident audit log.</p>
+  <h4>4. Your promises</h4><p>All documents are genuine and belong to you or your business. You will only list items you own or are authorised to sell, ship what customers pay for, and honour your published return policy. Counterfeit, stolen or illegal goods are banned.</p>
+  <h4>5. How documents are handled</h4><p>Documents are stored privately, outside public folders, and are visible only to you and {{ COMPANY_NAME }} reviewers. They are used only for verification, fraud prevention and legal obligations, and are kept as the Data Protection Act, 2019 allows.</p>
+  <h4>6. Consequences</h4><p>False documents, repeated customer complaints or fraud lead to immediate suspension, withheld payouts while we investigate, and referral to the authorities where the law requires.</p>
+  <h4>7. Re-verification</h4><p>We may ask you to re-verify at any time, for example when payout details or business ownership change.</p>
+</div>{% endblock %}

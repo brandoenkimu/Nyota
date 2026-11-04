@@ -1,0 +1,39 @@
+{% extends 'portal/base.html' %}{% load nyota %}
+{% block portal %}
+<div class="note {% if v.status == 'approved' %}ok{% elif v.status in 'rejected needs_info' %}bad{% else %}warn{% endif %} mb-3">{% icon 'shield' %}<div>
+  <b>{{ v.get_status_display }}</b>
+  {% if v.status == 'draft' %}<br>Nyota verifies every seller so customers are protected from scams. Your shop goes live and earns the <b>Verified seller</b> badge once an administrator and the CEO approve your documents.
+  {% elif v.status == 'approved' %}<br>Your shop is verified. Thank you for helping keep the marketplace honest.
+  {% elif v.note %}<br>{{ v.note }}{% endif %}
+</div></div>
+
+<div class="vsteps mb-4">{% for label, key in steps %}<span class="vstep {% if v.status == key or v.status == 'approved' %}on{% endif %}">{{ forloop.counter }}. {{ label }}</span>{% endfor %}</div>
+
+<div class="row g-4">
+  <div class="col-lg-6"><div class="glass p-4">
+    <h5>1. Your details</h5>
+    {% if details %}<form method="post">{% csrf_token %}<input type="hidden" name="action" value="save">
+      {% for f in details %}<div class="mb-3"><label class="form-label small">{{ f.label }}</label>{{ f }}{% for e in f.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</div>{% endfor %}
+      <button class="btn btn-ny">Save details</button></form>
+    {% else %}<dl class="small mb-0"><dt>Name</dt><dd>{{ v.legal_name }}</dd><dt>ID number</dt><dd>{{ v.id_number }}</dd><dt>KRA PIN</dt><dd>{{ v.kra_pin }}</dd><dt>Address</dt><dd>{{ v.business_address }}</dd></dl><p class="small text-muted mb-0">Locked while under review or after approval.</p>{% endif %}
+  </div></div>
+  <div class="col-lg-6"><div class="glass p-4">
+    <h5>2. Documents</h5>
+    {% if missing %}<div class="small text-warning mb-2">Still needed: {{ missing|join:", " }}</div>{% endif %}
+    {% for d in docs %}<div class="d-flex align-items-center gap-2 py-2 border-bottom" style="border-color:var(--line)!important">
+      <div class="flex-fill"><b class="small">{{ d.get_kind_display }}</b><div class="small text-muted">{{ d.original_name }} · {{ d.get_status_display }}{% if d.note %} · {{ d.note }}{% endif %}</div></div>
+      <a class="btn btn-soft btn-sm" target="_blank" href="{% url 'portals:verification_file' d.pk %}">View</a>
+      {% if v.editable and d.status != 'accepted' %}<form method="post" action="{% url 'portals:seller_doc_delete' d.pk %}">{% csrf_token %}<button class="btn btn-ghost btn-sm">Remove</button></form>{% endif %}
+    </div>{% empty %}<p class="text-muted small">No documents yet.</p>{% endfor %}
+    {% if v.editable %}<form method="post" enctype="multipart/form-data" class="mt-3">{% csrf_token %}<input type="hidden" name="action" value="upload">
+      <div class="mb-2">{{ docform.kind }}</div><div class="mb-2">{{ docform.file }}{% for e in docform.file.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</div>
+      <div class="small text-muted mb-2">{{ docform.file.help_text }} Files are stored privately; only Nyota reviewers can open them.</div>
+      <button class="btn btn-soft">Upload</button></form>{% endif %}
+  </div></div>
+</div>
+
+{% if v.editable %}<div class="glass p-4 mt-4"><h5>3. Submit for review</h5>
+  <form method="post">{% csrf_token %}<input type="hidden" name="action" value="submit">
+    <div class="form-check mb-3"><input class="form-check-input" type="checkbox" name="accept_policy" id="pol"><label class="form-check-label" for="pol">I confirm that every document is genuine and belongs to me or my business, and I accept the <a href="{% url 'core:seller_policy' %}" target="_blank">Seller Verification &amp; Anti-Fraud Policy</a>.</label></div>
+    <button class="btn btn-ny btn-lg">Submit for verification</button></form></div>{% endif %}
+{% endblock %}

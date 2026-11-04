@@ -8,8 +8,8 @@
   <meta name="description" content="{% block description %}Nyota is a marketplace of independent shops. Browse, chat with sellers and track every order.{% endblock %}">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M32 4l7 20 21 1-17 13 6 21-17-12-17 12 6-21L4 25l21-1z' fill='%238b5cf6'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;700&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css">
+  <link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;700&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
+  {% vendor_css 'bootstrap/bootstrap.min.css' 'https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css' %}
   <link rel="stylesheet" href="{% static 'css/base.css' %}">
   {% block css %}<link rel="stylesheet" href="{% static 'css/public.css' %}">{% endblock %}
   {% block extra_head %}{% endblock %}
@@ -28,7 +28,7 @@ d.setAttribute('data-pref',p||'auto');var r=NYOTA_RESOLVE(p),k=NYOTA_DARK[r]!==f
 </div>
 <main id="main" style="position:relative;z-index:2">{% block content %}{% endblock %}</main>
 {% block chrome_bottom %}{% include 'partials/footer.html' %}{% endblock %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+{% vendor_js 'bootstrap/bootstrap.bundle.min.js' 'https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js' %}
 <script src="{% static 'js/stars.js' %}"></script>
 <script src="{% static 'js/app.js' %}"></script>
 {% block js %}{% endblock %}

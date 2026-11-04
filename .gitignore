@@ -1,4 +1,39 @@
-# Python
+# Dependencies and build output
+node_modules/
+dist/
+build/
+*.tsbuildinfo
+
+# Secrets: never commit these (the .example files are safe and ARE committed)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Generated test evidence, logs, uploads
+test-results.json
+*.log
+npm-debug.log*
+yarn-error.log*
+uploads/
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+media/
+staticfiles/
+db.sqlite3
+.env
+
+private_media/
+
+# Python generated files
 __pycache__/
 *.py[cod]
 *.egg-info/
@@ -11,44 +46,5 @@ venv/
 .venv/
 env/
 
-# Secrets: never commit these (.env.example is safe and IS committed)
-.env
-.env.*
-!.env.example
-*.pem
-*.key
-*.p12
-*.pfx
-
-# Django generated / runtime data
-db.sqlite3
-db.sqlite3-journal
-media/
-staticfiles/
+# Downloaded vendor assets
 static/vendor/
-
-# Dependencies and build output
-node_modules/
-dist/
-build/
-*.tsbuildinfo
-
-# Logs, uploads, test evidence
-*.log
-npm-debug.log*
-yarn-error.log*
-uploads/
-test-results.json
-
-# Patch bundles and archives
-patch*.zip
-*.zip
-
-# Celery
-celerybeat-schedule*
-
-# Editors and OS
-.vscode/
-.idea/
-.DS_Store
-Thumbs.db
