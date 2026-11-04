@@ -159,7 +159,11 @@ img, svg { max-width: 100%; }
 }
 .form-control::placeholder { color: var(--faint); }
 .form-control:focus, .form-select:focus { background: var(--surface-solid); color: var(--text); border-color: var(--accent); box-shadow: 0 0 0 4px rgba(var(--accent-rgb), .22); }
-.form-select { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path fill='none' stroke='%239aa6d6' stroke-width='2' d='m2 5 6 6 6-6'/></svg>"); }
+.form-select {
+  appearance: none; -webkit-appearance: none; -moz-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path fill='none' stroke='%239aa6d6' stroke-width='2' d='m2 5 6 6 6-6'/></svg>");
+  background-repeat: no-repeat; background-position: right .9rem center; background-size: 16px 12px; padding-right: 2.5rem;
+}
 .form-select option { background: var(--surface-solid); color: var(--text); }
 .form-label, label { font-weight: 600; font-size: .9rem; color: var(--muted); margin-bottom: .35rem; }
 .form-check-input { background-color: var(--surface-solid); border-color: var(--line-strong); }

@@ -12,7 +12,7 @@
 <div class="row g-4">
   <div class="col-lg-6"><div class="glass p-4">
     <h5>1. Your details</h5>
-    {% if details %}<form method="post">{% csrf_token %}<input type="hidden" name="action" value="save">
+    {% if details %}<form method="post" id="detailsform">{% csrf_token %}<input type="hidden" name="action" value="save">
       {% for f in details %}<div class="mb-3"><label class="form-label small">{{ f.label }}</label>{{ f }}{% for e in f.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</div>{% endfor %}
       <button class="btn btn-ny">Save details</button></form>
     {% else %}<dl class="small mb-0"><dt>Name</dt><dd>{{ v.legal_name }}</dd><dt>ID number</dt><dd>{{ v.id_number }}</dd><dt>KRA PIN</dt><dd>{{ v.kra_pin }}</dd><dt>Address</dt><dd>{{ v.business_address }}</dd></dl><p class="small text-muted mb-0">Locked while under review or after approval.</p>{% endif %}
@@ -33,7 +33,24 @@
 </div>
 
 {% if v.editable %}<div class="glass p-4 mt-4"><h5>3. Submit for review</h5>
-  <form method="post">{% csrf_token %}<input type="hidden" name="action" value="submit">
+  {% if details %}<p class="small text-muted">This also saves whatever you've typed in "Your details" above — you don't need to click "Save details" first.</p>{% endif %}
+  <form method="post" id="submitform">{% csrf_token %}<input type="hidden" name="action" value="submit">
     <div class="form-check mb-3"><input class="form-check-input" type="checkbox" name="accept_policy" id="pol"><label class="form-check-label" for="pol">I confirm that every document is genuine and belongs to me or my business, and I accept the <a href="{% url 'core:seller_policy' %}" target="_blank">Seller Verification &amp; Anti-Fraud Policy</a>.</label></div>
     <button class="btn btn-ny btn-lg">Submit for verification</button></form></div>{% endif %}
+{% endblock %}
+{% block pjs %}
+<script>(function(){
+  // The details fields live in their own form (so "Save details" can be used on its own), but clicking
+  // "Submit for verification" should work even if that button was never pressed — so right before the
+  // submit form posts, copy whatever is currently typed in the details fields into it as hidden inputs.
+  var sf = document.getElementById('submitform'), df = document.getElementById('detailsform');
+  if (!sf || !df) return;
+  sf.addEventListener('submit', function(){
+    df.querySelectorAll('[name^="d-"]').forEach(function(el){
+      var h = document.createElement('input');
+      h.type = 'hidden'; h.name = el.name; h.value = el.value;
+      sf.appendChild(h);
+    });
+  });
+})();</script>
 {% endblock %}
