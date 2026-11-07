@@ -39,7 +39,7 @@ class Product(models.Model):
     low_stock_threshold = models.PositiveIntegerField(default=5)
     weight_kg = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
     image = models.ImageField(upload_to='products/', blank=True)
-    image_url = models.CharField(max_length=300, blank=True,
+    image_url = models.CharField(max_length=1000, blank=True,
                                  help_text='Filled by the fetch_product_images command or pasted by hand.')
     is_active = models.BooleanField(default=True, db_index=True)
     is_featured = models.BooleanField(default=False)
