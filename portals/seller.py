@@ -23,7 +23,8 @@ from orders.models import Payout, ShopOrder, ShopOrderStatus
 from orders.services import OrderError, advance_shop_order, cancel_shop_order
 from shops.models import ShopMember
 
-from .common import (badge, chart, csv_response, dash, form_page, kpi, link, listing, role_required, show, table)
+from .common import (badge, chart, csv_response, dash, export_tables, form_page, kpi, link, listing,
+                     report_period, role_required, show, table)
 from .forms import PayoutRequestForm, ProductForm, ReplyForm, ShopProfileForm
 
 SELLER = ('seller_owner', 'seller_staff')
@@ -260,6 +261,21 @@ def analytics_view(request):
     abc = etl.latest('abc', shop.pk).get('rows', [])
     basket = etl.latest('basket', shop.pk).get('rules', [])
     sent = etl.latest('sentiment', shop.pk)
+    if request.GET.get('export'):
+        _, _, exp_days, period = report_period(request)
+        exp_k = queries.kpis(shop.pk, days=exp_days)
+        resp = export_tables(request, f'{shop.slug}-analytics', f'{shop.name}: analytics', [
+            ('Top products', ['Product', 'Revenue', 'Units'],
+             [[t['name'], t['rev'], t['units']] for t in queries.top_products(shop.pk)]),
+            ('Product classes (ABC)', ['Product', 'Revenue', 'Share', 'Class'],
+             [[r['name'], r['revenue'], f"{r['share'] * 100:.1f}%", r['abc']] for r in abc]),
+            ('Bought together', ['If a customer buys', 'They also buy', 'Confidence', 'Lift'],
+             [[b['a_name'], b['b_name'], f"{b['confidence'] * 100:.0f}%", f"{b['lift']:.1f}x"] for b in basket]),
+        ], subtitle=(f"Revenue: KES {exp_k['revenue']:,.0f} · Orders: {exp_k['orders']} · "
+                    f"Customers: {exp_k['customers']} (product tables are from the latest warehouse rebuild, "
+                    'not limited to this period)'), period=period)
+        if resp:
+            return resp
     kpis = [kpi('Revenue (30 days)', k['revenue'], k['revenue_growth'], 'vs previous 30 days', 'wallet', True),
             kpi('Orders', k['orders'], k['orders_growth'], 'vs previous 30 days', 'box'),
             kpi('Average order', k['aov'], icon='chart', money=True), kpi('Customers', k['customers'], icon='users')]
@@ -295,7 +311,7 @@ def analytics_view(request):
     if fc.get('anomalies'):
         a = fc['anomalies'][-1]
         notes.append(('warn', f"Unusual sales day spotted: {a['date']} (KES {a['value']:,.0f})."))
-    return dash(request, 'Shop analytics', kpis, charts, tables, notes=notes,
+    return dash(request, 'Shop analytics', kpis, charts, tables, notes=notes, exportable=True,
                 actions=[('Refresh numbers', '/seller/analytics/refresh/', 'post')],
                 subtitle='Built from the Nyota data warehouse')
 
@@ -418,6 +434,43 @@ def attendance(request):
                    filters=[{'name': 'date', 'label': 'Date', 'type': 'date', 'value': day.isoformat()}],
                    subtitle='Staff clock in from the button in their own header.')
     return resp
+
+
+@role_required(*SELLER, shop_perm='attendance')
+def attendance_report(request):
+    """Days worked / absent for the team over any date range — not just one day."""
+    from payroll.services import cfg
+    shop = _shop(request)
+    start, end, _, period = report_period(request)
+    work_days_per_week = cfg()['WORK_DAYS_PER_WEEK']
+    expected = sum(1 for n in range((end - start).days + 1)
+                  if (start + dt.timedelta(days=n)).weekday() < work_days_per_week)
+    people = [shop.owner] + [m.user for m in shop.members.select_related('user').filter(active=True)]
+    marks = Attendance.objects.filter(user__in=people, date__range=(start, end))
+    present, late, hours = {}, {}, {}
+    for a in marks:
+        present[a.user_id] = present.get(a.user_id, 0) + 1
+        if a.late:
+            late[a.user_id] = late.get(a.user_id, 0) + 1
+        hours[a.user_id] = hours.get(a.user_id, 0) + a.hours
+    export_rows, rows = [], []
+    for u in people:
+        position = 'Owner' if u == shop.owner else (u.staff_profile.job_title if hasattr(u, 'staff_profile') else '')
+        p = present.get(u.pk, 0)
+        absent = max(expected - p, 0)
+        export_rows.append([u.display_name, position, p, absent, late.get(u.pk, 0), round(hours.get(u.pk, 0), 1)])
+        rows.append({'cells': [u.display_name, position, p, absent, late.get(u.pk, 0), f'{round(hours.get(u.pk, 0), 1)} h']})
+    if request.GET.get('export'):
+        resp = export_tables(request, f'{shop.slug}-attendance', f'{shop.name}: attendance', [
+            ('', ['Person', 'Position', 'Days present', 'Days absent', 'Days late', 'Total hours'], export_rows),
+        ], subtitle=f'{expected} working day{"s" if expected != 1 else ""} in this period', period=period)
+        if resp:
+            return resp
+    return listing(request, 'Attendance report', ['Person', 'Position', 'Days present', 'Days absent', 'Days late', 'Hours'],
+                   rows, exportable=True,
+                   filters=[{'name': 'from', 'label': 'From', 'type': 'date', 'value': start.isoformat()},
+                           {'name': 'to', 'label': 'To', 'type': 'date', 'value': end.isoformat()}],
+                   subtitle=f'{period} · {expected} working days expected ({work_days_per_week}/week)')
 
 
 # ------------------------------------------------------------------ profile

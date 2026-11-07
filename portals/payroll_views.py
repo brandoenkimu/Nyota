@@ -14,7 +14,7 @@ from payroll import services
 from payroll.forms import CategoryForm, GradeForm, ProfileForm, RunForm
 from payroll.models import JobCategory, PayGrade, PayProfile, PayrollRun, Payslip, RunStatus
 
-from .common import badge, form_page, link, listing, show
+from .common import badge, csv_response, form_page, link, listing, pdf_response, show
 
 User = get_user_model()
 
@@ -90,14 +90,51 @@ def run_detail(request, pk):
             messages.error(request, str(exc))
         return redirect(f'{request.pay_base}run/{pk}/')
     slips = run.slips.select_related('user')
+    if request.GET.get('export') in ('csv', 'pdf'):
+        headers = ['Name', 'Rank', 'Days present', 'Gross', 'Deductions', 'Net pay']
+        rows = [[s.user.display_name, s.grade_name, f'{s.days_present}/{s.days_expected}', s.gross,
+                s.total_deductions, s.net] for s in slips]
+        shop_line = run.shop.name if run.shop_id else 'Nyota (platform staff)'
+        if request.GET['export'] == 'csv':
+            return csv_response(f'payroll-{run.year}-{run.month:02d}.csv', headers, rows,
+                               title=f'Payroll: {run.label}', period=f'{run.label} · {shop_line}', request=request)
+        return pdf_response(f'payroll-{run.year}-{run.month:02d}.pdf', f'Payroll: {run.label}',
+                           f'{shop_line} · {run.get_status_display()}',
+                           [('', headers, rows)], period=run.label, request=request,
+                           meta=[('Total gross', run.total_gross), ('Total net pay', run.total_net), ('People', slips.count())])
     return show(request, 'portal/payroll_run.html', {'run': run, 'slips': slips, 'base': request.pay_base,
                                                      'can_prepare': request.pay_can_prepare, 'can_approve': request.pay_can_approve},
                 f'Payroll: {run.label}')
 
 
+def _payslip_pdf(slip, request=None):
+    """One formatted payslip document — not a generic table dump — for an employee to keep or print."""
+    earnings = [
+        ['Base salary', slip.base], ['Category allowance', slip.category_allowance],
+        ['Fixed allowance', slip.fixed_allowance], ['Overtime pay', slip.overtime_pay],
+    ]
+    if slip.adjustment:
+        earnings.append([slip.adjustment_note or 'Adjustment', slip.adjustment])
+    earnings.append(['Gross pay', slip.gross])
+    deductions = [
+        ['Absence', slip.absence_deduction], ['Lateness', slip.late_deduction], ['PAYE', slip.paye],
+        ['NSSF', slip.nssf], ['SHIF', slip.shif], ['Housing levy', slip.housing_levy],
+        ['Total deductions', slip.total_deductions],
+    ]
+    return pdf_response(
+        f'payslip-{slip.user.username}-{slip.run.year}-{slip.run.month:02d}.pdf',
+        f'Payslip: {slip.run.label}', slip.run.shop.name if slip.run.shop_id else 'Nyota (platform staff)',
+        [('Earnings', ['Item', 'Amount (KES)'], earnings), ('Deductions', ['Item', 'Amount (KES)'], deductions)],
+        period=slip.run.label, request=request,
+        meta=[('Employee', slip.user.display_name), ('Rank', slip.grade_name), ('Position', slip.category_name),
+             ('Days present', f'{slip.days_present} / {slip.days_expected}'), ('Net pay', slip.net)])
+
+
 @scoped
 def slip_detail(request, pk):
     slip = get_object_or_404(Payslip.objects.select_related('run', 'user'), pk=pk, run__shop=request.pay_shop)
+    if request.GET.get('export') == 'pdf':
+        return _payslip_pdf(slip, request)
     if request.method == 'POST' and request.pay_can_prepare:
         try:
             from decimal import Decimal, InvalidOperation
@@ -192,10 +229,14 @@ def my_payslips(request):
     if u.role == 'customer':
         return redirect(u.home_url)
     qs = Payslip.objects.filter(user=u, run__status__in=[RunStatus.APPROVED, RunStatus.PAID]).select_related('run')
+    if request.GET.get('export') == 'csv':
+        return csv_response('my-payslips.csv', ['Month', 'Rank', 'Gross', 'Deductions', 'Net pay', 'Status'],
+                            [[s.run.label, s.grade_name, s.gross, s.total_deductions, s.net, s.run.get_status_display()]
+                             for s in qs], title=f'Payslip history: {u.display_name}', request=request)
     rows = [{'cells': [link(f'/me/payslips/{s.pk}/', s.run.label), s.grade_name, s.gross, s.total_deductions, s.net,
                        badge(s.run.status, s.run.get_status_display())], 'url': f'/me/payslips/{s.pk}/'} for s in qs]
     return listing(request, 'My payslips', ['Month', 'Rank', 'Gross', 'Deductions', 'Net pay', 'Status'], rows,
-                   empty='No payslips yet.')
+                   empty='No payslips yet.', extra_actions=[('Export CSV', '?export=csv')])
 
 
 def my_payslip(request, pk):
@@ -204,4 +245,6 @@ def my_payslip(request, pk):
         return redirect(f'{reverse("accounts:staff_login")}?next={request.path}')
     slip = get_object_or_404(Payslip.objects.select_related('run', 'user'), pk=pk, user=u,
                              run__status__in=[RunStatus.APPROVED, RunStatus.PAID])
+    if request.GET.get('export') == 'pdf':
+        return _payslip_pdf(slip, request)
     return show(request, 'portal/payslip.html', {'slip': slip, 'editable': False, 'base': '/me/payslips/'}, f'Payslip {slip.run.label}')

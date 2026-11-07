@@ -19,13 +19,15 @@ from catalog.models import Category
 from core.models import HeroSlide
 from core.notify import notify
 from core.utils import paginate
+from ads import services as ads_services
 from ads.models import Promotion, PromotionStatus
 from orders.models import Coupon, Order, Payout, ShopOrder
 from payments.models import Payment
 from shops.models import Shop, ShopStatus
 
-from .common import badge, chart, csv_response, dash, form_page, kpi, link, listing, role_required, show, table
-from .forms import (CategoryForm, CouponForm, ShopAdminForm, SlideForm, UserAdminForm)
+from .common import (badge, chart, csv_response, dash, export_tables, form_page, kpi, link, listing,
+                     report_period, role_required, show, table)
+from .forms import (CategoryForm, CouponForm, FeatureShopForm, ShopAdminForm, SlideForm, UserAdminForm)
 from .seller import handle_shop_order
 
 User = get_user_model()
@@ -349,6 +351,48 @@ def attendance(request):
 
 
 @role_required(*ADMIN)
+def attendance_report(request):
+    """Who worked how many days, and how many they're likely to have missed, over any date you pick —
+    the 'days worked / absent' view the single-day Attendance page can't give you."""
+    from payroll.services import cfg
+    start, end, _, period = report_period(request)
+    work_days_per_week = cfg()['WORK_DAYS_PER_WEEK']
+    expected = sum(1 for n in range((end - start).days + 1)
+                  if (start + dt.timedelta(days=n)).weekday() < work_days_per_week)
+    people = User.objects.filter(Q(role__in=PLATFORM_ROLES) | Q(role='seller_staff'), is_active=True).select_related(
+        'staff_profile')
+    marks = Attendance.objects.filter(date__range=(start, end))
+    present = {}
+    late = {}
+    hours = {}
+    for a in marks:
+        present[a.user_id] = present.get(a.user_id, 0) + 1
+        if a.late:
+            late[a.user_id] = late.get(a.user_id, 0) + 1
+        hours[a.user_id] = hours.get(a.user_id, 0) + a.hours
+    export_rows, rows = [], []
+    for u in people.order_by('first_name', 'last_name'):
+        p = present.get(u.pk, 0)
+        absent = max(expected - p, 0)
+        row = [u.display_name, u.get_role_display(), p, absent, late.get(u.pk, 0), round(hours.get(u.pk, 0), 1)]
+        export_rows.append(row)
+        rows.append({'cells': [u.display_name, u.get_role_display(), p, absent, late.get(u.pk, 0),
+                               f'{round(hours.get(u.pk, 0), 1)} h']})
+    if request.GET.get('export'):
+        resp = export_tables(request, 'attendance-report', 'Staff attendance', [
+            ('', ['Person', 'Role', 'Days present', 'Days absent', 'Days late', 'Total hours'], export_rows),
+        ], subtitle=f'{expected} working day{"s" if expected != 1 else ""} in this period '
+                    f'({work_days_per_week} working days/week)', period=period)
+        if resp:
+            return resp
+    return listing(request, 'Staff attendance', ['Person', 'Role', 'Days present', 'Days absent', 'Days late', 'Hours'],
+                   rows, exportable=True,
+                   filters=[{'name': 'from', 'label': 'From', 'type': 'date', 'value': start.isoformat()},
+                           {'name': 'to', 'label': 'To', 'type': 'date', 'value': end.isoformat()}],
+                   subtitle=f'{period} · {expected} working days expected ({work_days_per_week}/week)')
+
+
+@role_required(*ADMIN)
 def audit(request):
     qs = AuditLog.objects.all()
     q, action = request.GET.get('q', '').strip(), request.GET.get('action', '').strip()
@@ -372,7 +416,7 @@ def audit(request):
 
 
 # ----------------------------------------------------------------- platform fees (how Nyota itself earns)
-@role_required(*ADMIN)
+@role_required(*ADMIN, 'ceo')
 def platform_fees(request):
     """Two income streams: the commission cut on every shop's orders, and shop-advertising fees.
     This is the answer to 'how do we get paid for managing these shops' — nothing here moves money,
@@ -385,6 +429,26 @@ def platform_fees(request):
     ads_30 = ads_paid.filter(created_at__gte=timezone.now() - dt.timedelta(days=30)).aggregate(v=Sum('amount'))['v'] or 0
     ads_all = ads_paid.aggregate(v=Sum('amount'))['v'] or 0
     paid_out = Payout.objects.filter(status='paid').aggregate(v=Sum('amount'))['v'] or 0
+    if request.GET.get('export'):
+        # A report you download is one you might print, file or send on — so unlike the on-screen 30-day
+        # snapshot above, the export can be narrowed with ?from=&to= to exactly the period being audited.
+        start, end, _, period = report_period(request)
+        exp_orders = delivered.filter(created_at__date__range=(start, end))
+        exp_promos = Promotion.objects.filter(status__in=[PromotionStatus.ACTIVE, PromotionStatus.EXPIRED],
+                                              created_at__date__range=(start, end))
+        exp_shops = exp_orders.values('shop__name').annotate(v=Sum('commission_amount')).order_by('-v')[:500]
+        exp_ads = exp_promos.select_related('shop', 'plan').order_by('-created_at')[:500]
+        period_comm = exp_orders.aggregate(v=Sum('commission_amount'))['v'] or 0
+        period_ads = exp_promos.aggregate(v=Sum('amount'))['v'] or 0
+        resp = export_tables(request, 'platform-fees', 'Platform fees', [
+            ('Top shops by commission earned', ['Shop', 'Commission'],
+             [[s['shop__name'], s['v']] for s in exp_shops]),
+            ('Advertising purchases', ['Shop', 'Plan', 'Amount', 'Status', 'Bought'],
+             [[p.shop.name, p.plan.name, p.amount, p.get_status_display(), p.created_at.strftime('%d %b %Y')]
+              for p in exp_ads]),
+        ], subtitle=f'Commission: KES {period_comm:,.0f} · Advertising: KES {period_ads:,.0f}', period=period)
+        if resp:
+            return resp
     kpis = [
         kpi('Commission earned (30 days)', comm_30, icon='percent', money=True),
         kpi('Advertising fees (30 days)', ads_30, icon='star', money=True),
@@ -416,6 +480,26 @@ def platform_fees(request):
         table('Recent advertising purchases', ['Shop', 'Plan', 'Amount', 'Status', 'Bought'], arows,
              empty='No shop has bought a featured slot yet.', link_url='/staff/admin/slides/'),
     ]
-    return dash(request, 'Platform fees', kpis, charts, tables,
+    return dash(request, 'Platform fees', kpis, charts, tables, exportable=True,
+               actions=[('Feature a shop for free', '/staff/admin/feature-shop/', 'get')],
                subtitle='Every shop pays a commission on each order (set per shop) plus an optional fee to be '
                         'featured on the home page. Payout requests are reviewed on the Payouts page.')
+
+
+@role_required(*ADMIN, 'ceo')
+def feature_shop(request):
+    """One click, no approval chain: pick a shop and a duration, and it's live on the home page right
+    away — a reward/promotion rather than a sale, kept separate from paid advertising slots."""
+    form = FeatureShopForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        shop, plan, note = form.cleaned_data['shop'], form.cleaned_data['plan'], form.cleaned_data['note']
+        try:
+            ads_services.grant_free(shop, plan, request.user, note=note, request=request)
+        except ads_services.PromotionError as exc:
+            messages.error(request, str(exc))
+            return form_page(request, 'Feature a shop for free', form, 'Feature now', '/staff/admin/platform-fees/')
+        messages.success(request, f'{shop.name} is now featured on the home page for {plan.days} days, free of charge.')
+        return redirect('portals:admin_platform_fees')
+    return form_page(request, 'Feature a shop for free', form, 'Feature now', '/staff/admin/platform-fees/',
+                     note='This does not charge the shop — it goes straight to the home-page carousel, '
+                          'the same as a paid slot, and expires automatically when the duration ends.')

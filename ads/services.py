@@ -151,6 +151,20 @@ def expire_promotions():
 
 
 @transaction.atomic
+def grant_free(shop, plan, granted_by, note='', request=None):
+    """An admin/CEO features a shop for free — a promotion or reward, not a sale. Goes live immediately,
+    exactly like a paid purchase, just with no Payment involved (amount recorded as 0, method 'comp' so
+    it's easy to tell apart from paid slots in the Platform fees report)."""
+    if shop.promotions.filter(status=PromotionStatus.PENDING_PAYMENT).exists():
+        raise PromotionError('This shop already has an advertising purchase waiting for payment.')
+    promo = Promotion.objects.create(shop=shop, plan=plan, amount=0, payment_method='comp',
+                                     created_by=granted_by, status=PromotionStatus.PENDING_PAYMENT)
+    record('promotion.granted', target=promo, request=request, plan=plan.name,
+          by=granted_by.get_full_name() or granted_by.username, note=note[:200])
+    return activate(promo, request=request)
+
+
+@transaction.atomic
 def cancel_pending(promo, request=None):
     if promo.status != PromotionStatus.PENDING_PAYMENT:
         raise PromotionError('Only a purchase still waiting for payment can be cancelled.')

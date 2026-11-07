@@ -3,6 +3,25 @@ from django.conf import settings
 RESERVED = {'www', 'app', 'admin', 'api', 'static', 'media', 'staff', 'seller'}
 
 
+class NoCacheSensitiveMiddleware:
+    """Payslips, payroll, audit logs, customer data and every other staff/seller page can hold things a
+    shared computer, a proxy cache, or the browser's back/forward cache shouldn't keep around after the
+    person signs out. Tell every cache along the way — browser, CDN, corporate proxy — not to store these
+    responses at all, the same rule banks and health portals use for anything behind a login."""
+
+    SENSITIVE_PREFIXES = ('/staff/', '/seller/', '/me/', '/account/', '/api/')
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        if request.path_info.startswith(self.SENSITIVE_PREFIXES):
+            response['Cache-Control'] = 'no-store, no-cache, must-revalidate, private'
+            response['Pragma'] = 'no-cache'
+        return response
+
+
 class ShopSubdomainMiddleware:
     """Every seller gets a site of their own:  https://<shop-slug>.<ROOT_DOMAIN>/
     Active only when ROOT_DOMAIN is configured (needs wildcard DNS, see README)."""
@@ -23,8 +42,9 @@ class ShopSubdomainMiddleware:
 
 class MembersOnlyMiddleware:
     """Members-only mode (settings.MEMBERS_ONLY, on by default): visitors who are not signed in can only
-    reach the sign-in, sign-up, password-recovery and OAuth pages. Everything else (home page, products,
-    shops, cart, checkout, payments) sends them to the right login page, and AJAX calls such as
+    reach the sign-in, sign-up, password-recovery and OAuth pages, plus the public marketing pages (the
+    landing page at '/', about, contact, support, offerings, terms, privacy). Everything else (the real
+    catalog, shops, cart, checkout, payments) sends them to the right login page, and AJAX calls such as
     "add to cart" get a JSON 401 that the page turns into the same redirect.
 
     Server-to-server callbacks (M-Pesa, Stripe) and the health check stay open because the payment
@@ -34,7 +54,11 @@ class MembersOnlyMiddleware:
         '/static/', '/favicon.ico', '/login/', '/seller/login/', '/staff/login/', '/signup/', '/seller/signup/',
         '/verify-email/', '/password/reset/', '/oauth/', '/terms/', '/privacy/', '/policies/', '/api/client-error/', '/django-admin/',
         '/payments/mpesa/callback/', '/payments/stripe/webhook/', '/api/health/',
+        '/about/', '/contact/', '/support/', '/offerings/',
     )
+    # Exact paths only -- '/' can't go in PUBLIC_PREFIXES above because every path on the site starts
+    # with '/', which would make the whole prefix check match everything.
+    PUBLIC_EXACT = ('/',)
 
     def __init__(self, get_response):
         self.get_response = get_response
@@ -51,7 +75,7 @@ class MembersOnlyMiddleware:
         if not settings.MEMBERS_ONLY or request.user.is_authenticated:
             return self.get_response(request)
         path = request.path_info
-        if path.startswith(self.PUBLIC_PREFIXES):
+        if path in self.PUBLIC_EXACT or path.startswith(self.PUBLIC_PREFIXES):
             return self.get_response(request)
         from django.http import JsonResponse
         from django.shortcuts import redirect

@@ -1,0 +1,40 @@
+{% extends 'base.html' %}{% load static nyota %}
+{% block title %}Contact us{% endblock %}
+{% block description %}Get in touch with {{ COMPANY_NAME }} -- questions, support or partnerships.{% endblock %}
+{% block css %}{{ block.super }}<link rel="stylesheet" href="{% static 'css/landing.css' %}">{% endblock %}
+{% block content %}
+<div class="ny-container page-head" style="max-width:1040px">
+  <span class="sec-kicker">We'd love to hear from you</span><h1>Contact us</h1>
+  <p class="lead text-muted" style="max-width:640px">Questions about an order, interested in selling, or just want to say hello &mdash;
+    send a message below and we'll reply by email.</p>
+
+  <div class="contact-grid mt-3">
+    <div class="pcardx" style="background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:1.6rem">
+      {% if sent %}
+      <div class="empty" style="padding:2rem 1rem">{% icon 'check' 40 %}<h3 class="mt-2 mb-1">Message sent</h3><p class="text-muted mb-0">Thanks &mdash; we've got it and will reply by email soon.</p></div>
+      {% else %}
+      <form method="post" data-warp novalidate>{% csrf_token %}
+        {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors.0 }}</div>{% endif %}
+        <div class="row g-3">
+          <div class="col-md-6"><label class="form-label">Name</label>{{ form.name }}{% if form.name.errors %}<div class="invalid-feedback d-block">{{ form.name.errors.0 }}</div>{% endif %}</div>
+          <div class="col-md-6"><label class="form-label">Email</label>{{ form.email }}{% if form.email.errors %}<div class="invalid-feedback d-block">{{ form.email.errors.0 }}</div>{% endif %}</div>
+          <div class="col-12"><label class="form-label">Topic</label>{{ form.topic }}</div>
+          <div class="col-12"><label class="form-label">Message</label>{{ form.message }}{% if form.message.errors %}<div class="invalid-feedback d-block">{{ form.message.errors.0 }}</div>{% endif %}</div>
+          <div class="hp-field" aria-hidden="true">{{ form.website }}</div>
+        </div>
+        <button class="btn btn-ny btn-lg mt-3" type="submit">Send message {% icon 'send' %}</button>
+      </form>
+      {% endif %}
+    </div>
+
+    <div class="pcardx" style="background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:1.6rem">
+      <h3 class="mb-2">Other ways to reach us</h3>
+      <div class="info-row"><span class="ico-wrap">{% icon 'mail' %}</span><div><b>Email</b><span>{{ contact_email|default:'Use the form on this page' }}</span></div></div>
+      {% if contact_phone %}<div class="info-row"><span class="ico-wrap">{% icon 'phone' %}</span><div><b>Phone</b><span>{{ contact_phone }}</span></div></div>{% endif %}
+      {% if whatsapp_url %}<div class="info-row"><span class="ico-wrap">{% icon 'chat' %}</span><div><b>WhatsApp</b><span><a href="{{ whatsapp_url }}" target="_blank" rel="noopener">Message us</a></span></div></div>{% endif %}
+      <div class="info-row"><span class="ico-wrap">{% icon 'clock' %}</span><div><b>Hours</b><span>{{ support_hours }}</span></div></div>
+      <div class="info-row"><span class="ico-wrap">{% icon 'headset' %}</span><div><b>Already have an account?</b><span><a href="{% url 'core:support' %}">Visit the support page</a> for help with an order.</span></div></div>
+    </div>
+  </div>
+</div>
+{% endblock %}

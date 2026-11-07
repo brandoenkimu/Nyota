@@ -28,7 +28,8 @@ from payments import mpesa, stripe_service
 from payments.models import WebhookLog
 from shops.models import Shop, ShopStatus
 
-from .common import badge, chart, csv_response, dash, kpi, link, listing, role_required, show, table
+from .common import (badge, chart, csv_response, dash, export_tables, kpi, link, listing, pdf_response,
+                     report_period, role_required, show, table)
 
 ANALYST = ('analyst', 'admin', 'developer', 'ceo')
 
@@ -67,16 +68,31 @@ def analyst_home(request):
         chart('cty', 'bar', 'Revenue by customer county', [c['county'] for c in counties],
               [{'label': 'Revenue', 'data': [float(c['rev']) for c in counties]}], money=True),
     ]
+    top_shops, top_products = queries.top_shops(), queries.top_products()
+    if request.GET.get('export'):
+        _, _, exp_days, period = report_period(request, default_days=90)
+        exp_shops = queries.top_shops(days=exp_days, limit=100)
+        exp_products = queries.top_products(days=exp_days, limit=200)
+        exp_k = queries.kpis(days=exp_days)
+        resp = export_tables(request, 'analytics-overview', 'Analytics overview', [
+            ('Top shops', ['Shop', 'Revenue', 'Orders', 'Commission'],
+             [[s['name'], s['rev'], s['orders'], s['comm']] for s in exp_shops]),
+            ('Top products', ['Product', 'Shop', 'Revenue', 'Units'],
+             [[p['name'], p['shop_name'], p['rev'], p['units']] for p in exp_products]),
+        ], subtitle=f"Revenue: KES {exp_k['revenue']:,.0f} · Orders: {exp_k['orders']} · Commission: KES {exp_k['commission']:,.0f}",
+        period=period)
+        if resp:
+            return resp
     tables = [
         table('Top shops (90 days)', ['Shop', 'Revenue', 'Orders', 'Commission'],
-              [{'cells': [s['name'], s['rev'], s['orders'], s['comm']]} for s in queries.top_shops()]),
+              [{'cells': [s['name'], s['rev'], s['orders'], s['comm']]} for s in top_shops]),
         table('Top products (90 days)', ['Product', 'Shop', 'Revenue', 'Units'],
-              [{'cells': [p['name'], p['shop_name'], p['rev'], p['units']]} for p in queries.top_products()]),
+              [{'cells': [p['name'], p['shop_name'], p['rev'], p['units']]} for p in top_products]),
     ]
     last = EtlRun.objects.filter(ok=True).first()
     return dash(request, 'Analytics overview', kpis, charts, tables,
                 actions=[('Rebuild warehouse', '/staff/analyst/refresh/', 'post'),
-                         ('Export sales CSV', '/staff/analyst/export/sales/')],
+                         ('Export sales CSV', '/staff/analyst/export/sales/')], exportable=True,
                 subtitle=f'Warehouse last built {timezone.localtime(last.finished_at):%d %b %H:%M}' if last else '')
 
 
@@ -97,7 +113,7 @@ def analyst_customers(request):
     notes = [('info', 'RFM scores each customer 1 to 5 on Recency, Frequency and Monetary value. '
                       'Champions and Loyal customers deserve rewards; At Risk and Hibernating need a win-back offer.')]
     return dash(request, 'Customer segments', [], charts, tables, notes=notes,
-                actions=[('Export CSV', '/staff/analyst/export/rfm/')])
+                actions=[('Export CSV', '/staff/analyst/export/rfm/'), ('Export PDF', '/staff/analyst/export/rfm/?format=pdf')])
 
 
 @role_required('analyst', 'admin', 'developer')
@@ -126,7 +142,8 @@ def analyst_products(request):
         notes.append(('info', f"Review sentiment overall: {sent['label']} ({sent['average']:+.2f}) from {sent['reviews']} reviews: "
                               f"{sent['positive']} positive, {sent['negative']} negative."))
     return dash(request, 'Products and baskets', [], charts, tables, notes=notes,
-                actions=[('Export ABC CSV', '/staff/analyst/export/abc/'), ('Export pairs CSV', '/staff/analyst/export/basket/')])
+                actions=[('Export ABC CSV', '/staff/analyst/export/abc/'), ('Export ABC PDF', '/staff/analyst/export/abc/?format=pdf'),
+                         ('Export pairs CSV', '/staff/analyst/export/basket/'), ('Export pairs PDF', '/staff/analyst/export/basket/?format=pdf')])
 
 
 @role_required('analyst', 'admin', 'developer', 'ceo')
@@ -167,26 +184,41 @@ def analyst_refresh(request):
 
 @role_required('analyst', 'admin', 'developer')
 def analyst_export(request, kind):
+    """CSV by default; add ?format=pdf for a PDF of the same table (sales is CSV-only — 20,000 rows
+    doesn't make a sane PDF, use the CSV in a spreadsheet instead). 'sales' can also be narrowed with
+    ?from=&to= since it has a real date per row; the other three are the latest warehouse snapshot, which
+    isn't itself split by day, so they're labelled with when that snapshot was last rebuilt instead."""
+    title, headers, rows, period = None, None, None, None
     if kind == 'sales':
-        rows = FactSales.objects.select_related('date', 'shop', 'product', 'customer').order_by('-date_id')[:20000]
+        start, end, _, period = report_period(request, default_days=3650)  # no range given = everything
+        qs = (FactSales.objects.filter(date_id__range=(start, end))
+             .select_related('date', 'shop', 'product', 'customer').order_by('-date_id')[:20000])
         return csv_response('sales.csv', ['date', 'order', 'shop', 'product', 'customer', 'qty', 'gross', 'discount', 'net',
                                           'commission'],
                             [[r.date_id, r.order_number, r.shop.name, r.product.name, r.customer.name, r.quantity, r.gross,
-                              r.discount, r.net, r.commission] for r in rows])
-    if kind == 'rfm':
-        rows = etl.latest('rfm').get('rows', [])
-        return csv_response('customer-segments.csv', ['customer', 'segment', 'rfm', 'recency_days', 'orders', 'spend'],
-                            [[r['name'], r['segment'], r['rfm_score'], r['recency_days'], r['frequency'], r['monetary']]
-                             for r in rows])
-    if kind == 'abc':
-        rows = etl.latest('abc').get('rows', [])
-        return csv_response('product-abc.csv', ['product', 'revenue', 'share', 'class'],
-                            [[r['name'], r['revenue'], round(r['share'], 4), r['abc']] for r in rows])
-    if kind == 'basket':
-        rows = etl.latest('basket').get('rules', [])
-        return csv_response('basket-pairs.csv', ['if_buys', 'also_buys', 'orders', 'support', 'confidence', 'lift'],
-                            [[r['a_name'], r['b_name'], r['count'], r['support'], r['confidence'], r['lift']] for r in rows])
-    return redirect('portals:analyst_home')
+                              r.discount, r.net, r.commission] for r in qs],
+                            title='Sales', period=period, request=request)
+    elif kind in ('rfm', 'abc', 'basket'):
+        payload = etl.latest(kind)
+        last_run = EtlRun.objects.filter(ok=True).first()
+        period = (f'Warehouse snapshot of {last_run.finished_at:%d %b %Y, %H:%M}'
+                 if last_run and last_run.finished_at else 'Latest warehouse snapshot')
+        if kind == 'rfm':
+            title, headers = 'Customer segments', ['customer', 'segment', 'rfm', 'recency_days', 'orders', 'spend']
+            rows = [[r['name'], r['segment'], r['rfm_score'], r['recency_days'], r['frequency'], r['monetary']]
+                   for r in payload.get('rows', [])]
+        elif kind == 'abc':
+            title, headers = 'Product classes (ABC)', ['product', 'revenue', 'share', 'class']
+            rows = [[r['name'], r['revenue'], round(r['share'], 4), r['abc']] for r in payload.get('rows', [])]
+        else:
+            title, headers = 'Bought together', ['if_buys', 'also_buys', 'orders', 'support', 'confidence', 'lift']
+            rows = [[r['a_name'], r['b_name'], r['count'], r['support'], r['confidence'], r['lift']]
+                   for r in payload.get('rules', [])]
+    else:
+        return redirect('portals:analyst_home')
+    if request.GET.get('format') == 'pdf':
+        return pdf_response(f'{kind}.pdf', title, '', [('', headers, rows)], period=period, request=request)
+    return csv_response(f'{kind}.csv', headers, rows, title=title, period=period, request=request)
 
 
 # ---------------------------------------------------------------------- CEO

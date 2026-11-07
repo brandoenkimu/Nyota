@@ -4,6 +4,7 @@ from decimal import Decimal
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.cache import cache
 from django.db.models import Avg, Count, F, Q, Sum
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -18,7 +19,10 @@ from orders.models import Order, OrderItem, ShopOrderStatus
 from shops.models import Shop, ShopStatus
 
 from .context import ACCENT_KEYS, THEME_KEYS
+from .forms import ContactForm
+from .mail import send_mail_async
 from .models import HeroSlide, Notification
+from .sitecfg import site_setting, site_settings
 from .utils import paginate
 
 DEFAULT_SLIDES = [
@@ -43,6 +47,12 @@ def _live_products():
 
 
 def home(request):
+    """Visitors who are signed in (or signed out but on a members-only build without the gate on)
+    see the real marketplace, unchanged. Anyone else gets the public landing page: what Nyota is,
+    the features, and clear buttons to sign in or join -- no catalog data, nothing that needs a
+    login to exist, so it's safe to show the world."""
+    if not request.user.is_authenticated:
+        return landing(request)
     slides = list(HeroSlide.objects.filter(active=True)) or DEFAULT_SLIDES
     base = _live_products()
     featured = base.filter(is_featured=True).order_by('-sold')[:10] or base.order_by('-sold')[:10]
@@ -59,6 +69,68 @@ def home(request):
         'stat_orders': Order.objects.count(),
     }
     return render(request, 'core/home.html', ctx)
+
+
+def landing(request):
+    """The public marketing homepage. Only ever reads aggregate, non-sensitive counts (how many
+    shops/products exist) -- nothing per-user, nothing that requires a login to be safe to publish."""
+    base = _live_products()
+    ctx = {
+        'stat_shops': Shop.objects.filter(status=ShopStatus.ACTIVE).count(),
+        'stat_products': base.count(),
+        'stat_orders': Order.objects.count(),
+        'app_links': site_settings('play_store_url', 'app_store_url'),
+    }
+    return render(request, 'core/landing.html', ctx)
+
+
+def _contact_rate_ok(request):
+    """A plain per-IP counter in cache -- 5 messages per hour. Separate from accounts.throttle
+    (which is specifically for login attempts) since this page needs no account to reach."""
+    fwd = request.META.get('HTTP_X_FORWARDED_FOR', '')
+    ip = (fwd.split(',')[0].strip() if fwd else request.META.get('REMOTE_ADDR', '')) or 'unknown'
+    key = f'contact-rl:{ip}'
+    count = cache.get(key, 0)
+    if count >= 5:
+        return False
+    cache.set(key, count + 1, 3600)
+    return True
+
+
+def contact(request):
+    sent = False
+    if request.method == 'POST':
+        form = ContactForm(request.POST)
+        if form.is_valid():
+            if not _contact_rate_ok(request):
+                form.add_error(None, "That's a lot of messages from this network in a short time. "
+                                      f"Please try again later, or email {site_setting('contact_email') or settings.DEFAULT_FROM_EMAIL} directly.")
+            else:
+                cd = form.cleaned_data
+                topic_label = dict(ContactForm.TOPICS).get(cd['topic'], cd['topic'])
+                to = site_setting('contact_email', settings.DEFAULT_FROM_EMAIL)
+                text = f"From: {cd['name']} <{cd['email']}>\nTopic: {topic_label}\n\n{cd['message']}"
+                send_mail_async(f'[{settings.COMPANY_NAME} contact] {topic_label} — {cd["name"]}', text, '', [to])
+                record('public.contact_message', request=request, topic=cd['topic'])
+                messages.success(request, "Thanks — we've got your message and will reply by email.")
+                sent = True
+                form = ContactForm()
+    else:
+        form = ContactForm()
+    ctx = {'form': form, 'sent': sent, **site_settings('contact_email', 'contact_phone', 'whatsapp_url', 'support_hours')}
+    return render(request, 'core/contact.html', ctx)
+
+
+def support(request):
+    ctx = site_settings('contact_email', 'contact_phone', 'whatsapp_url', 'support_hours')
+    return render(request, 'core/support.html', ctx)
+
+
+def offerings(request):
+    """A public overview of what's sold on Nyota and what sellers get -- marketing copy and live
+    category names only, never the gated product/shop listings themselves."""
+    ctx = {'categories': Category.objects.filter(parent__isnull=True)[:16]}
+    return render(request, 'core/offerings.html', ctx)
 
 
 SORTS = {

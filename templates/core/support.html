@@ -1,0 +1,25 @@
+{% extends 'base.html' %}{% load static nyota %}
+{% block title %}Support{% endblock %}
+{% block description %}Help with orders, accounts and selling on {{ COMPANY_NAME }}.{% endblock %}
+{% block css %}{{ block.super }}<link rel="stylesheet" href="{% static 'css/landing.css' %}">{% endblock %}
+{% block content %}
+<div class="ny-container page-head" style="max-width:860px">
+  <span class="sec-kicker">We're here to help</span><h1>Support</h1>
+  <p class="lead text-muted">Most answers are below. For anything else, our team replies by email.</p>
+
+  <div class="faq mt-4">
+    <details open><summary>Do I need an account to browse?</summary><p class="faq-body">You can read about {{ COMPANY_NAME }} and what it offers without one. Browsing shops, buying and tracking an order all need a free account, so every order is tied to someone and can be traced if anything goes wrong.</p></details>
+    <details><summary>How do I track an order?</summary><p class="faq-body">Sign in and open "Track an order" from your account, or use the order number and email from your confirmation message.</p></details>
+    <details><summary>What payment methods are supported?</summary><p class="faq-body">M-Pesa, card payments, and cash on delivery where the seller offers it. Every payment is confirmed instantly and recorded on your order.</p></details>
+    <details><summary>How do I become a seller?</summary><p class="faq-body">Use "Open a shop" to sign up as a seller. You'll go through a short verification step before your shop goes live, to keep the marketplace trustworthy for buyers.</p></details>
+    <details><summary>I forgot my password.</summary><p class="faq-body">Use "Forgot password" on the sign-in page for your account type (customer, seller or staff). A reset link is emailed to the address on file.</p></details>
+    <details><summary>Something looks wrong or I suspect a scam listing.</summary><p class="faq-body">Please contact us straight away with the shop or product name. Reports like this are reviewed by our verification team, not left to sit in a queue.</p></details>
+  </div>
+
+  <div class="cta-band mt-4">
+    <h3 class="mb-2">Still stuck?</h3>
+    <p class="text-muted mb-3">Send us a message and we'll get back to you by email{% if support_hours %}, during {{ support_hours }}{% endif %}.</p>
+    <a href="{% url 'core:contact' %}" class="btn btn-ny">Contact us {% icon 'arrow-right' %}</a>
+  </div>
+</div>
+{% endblock %}

@@ -13,3 +13,4 @@ Pillow>=10.4
 requests>=2.32
 stripe>=10.0
 tzdata
+reportlab>=4.2       # pure-Python PDF generation for downloadable reports/payslips (no system libraries needed)

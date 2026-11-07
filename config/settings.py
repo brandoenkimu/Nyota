@@ -96,6 +96,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    'core.middleware.NoCacheSensitiveMiddleware',
     'core.middleware.ShopSubdomainMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -185,6 +186,10 @@ LOGIN_MAX_FAILURES = 5
 LOGIN_LOCKOUT_SECONDS = 15 * 60
 SESSION_COOKIE_AGE = 60 * 60 * 24 * 14
 SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'          # sent on normal navigation, never on a cross-site form/image/script
+SESSION_SAVE_EVERY_REQUEST = True        # a session an admin force-ends (or a lockout) takes effect on the next click
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_HTTPONLY = False             # the client JS that reads the CSRF cookie for AJAX needs this — it's not secret
 
 # Social sign-in (customers only). Leave blank to hide the button.
 OAUTH = {
@@ -261,6 +266,7 @@ if not DEBUG:
     CSRF_COOKIE_SECURE = True
     SECURE_HSTS_SECONDS = 60 * 60 * 24 * 30
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'

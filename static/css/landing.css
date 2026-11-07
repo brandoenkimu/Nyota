@@ -1,0 +1,50 @@
+/* Public marketing pages only (landing, contact, support, offerings) -- loaded on top of public.css,
+   reusing the same design tokens (--accent, --surface, --line, --r-lg...) so these pages feel like
+   part of Nyota, not a bolted-on brochure site. */
+
+.feat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.1rem; }
+.feat-card { padding: 1.5rem; border-radius: var(--r-lg); background: var(--surface); border: 1px solid var(--line); transition: transform .35s var(--ease), border-color .3s, box-shadow .35s; }
+.feat-card:hover { transform: translateY(-5px); border-color: var(--accent); box-shadow: 0 22px 44px -22px rgba(var(--accent-rgb), .55); }
+.feat-ico { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; background: linear-gradient(135deg, rgba(var(--accent-rgb), .25), rgba(var(--accent-rgb), .06)); color: var(--accent); margin-bottom: 1rem; }
+.feat-ico .ico { width: 24px; height: 24px; }
+.feat-card h3 { font-size: 1.05rem; margin: 0 0 .4rem; }
+.feat-card p { color: var(--muted); font-size: .92rem; margin: 0; }
+
+.photo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1rem; }
+.photo-card { position: relative; border-radius: var(--r-lg); overflow: hidden; border: 1px solid var(--line); aspect-ratio: 4/3; background: linear-gradient(135deg, var(--accent), var(--accent-2)); }
+.photo-card img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .7s var(--ease); }
+.photo-card:hover img { transform: scale(1.07); }
+.photo-card.img-fallback img { display: none; }
+.photo-cap { position: absolute; left: 0; right: 0; bottom: 0; padding: 1rem 1.1rem; background: linear-gradient(0deg, rgba(0,0,0,.72), transparent); color: #fff; font-weight: 700; font-size: .92rem; }
+
+.store-badges { display: flex; flex-wrap: wrap; gap: .8rem; margin-top: 1.2rem; }
+.store-badge { display: inline-flex; align-items: center; gap: .7rem; padding: .7rem 1.2rem; border-radius: 14px; border: 1px solid var(--line-strong); background: var(--surface-solid); color: var(--text); min-width: 190px; }
+.store-badge .ico { width: 28px; height: 28px; flex: none; color: var(--accent); }
+.store-badge b { display: block; font-size: .95rem; line-height: 1.2; }
+.store-badge small { display: block; color: var(--faint); font-size: .74rem; letter-spacing: .03em; }
+.store-badge[href] { transition: transform .25s var(--ease), border-color .25s; } .store-badge[href]:hover { transform: translateY(-3px); border-color: var(--accent); color: var(--text); }
+.store-badge.disabled { opacity: .55; cursor: default; }
+.store-badge.disabled b::after { content: ''; }
+
+.info-row { display: flex; gap: .9rem; align-items: flex-start; padding: .9rem 0; border-bottom: 1px dashed var(--line); }
+.info-row:last-child { border-bottom: 0; }
+.info-row .ico-wrap { width: 40px; height: 40px; border-radius: 12px; flex: none; display: grid; place-items: center; background: rgba(var(--accent-rgb), .14); color: var(--accent); }
+.info-row b { display: block; } .info-row span { color: var(--muted); font-size: .92rem; }
+
+.contact-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 1.4rem; align-items: start; }
+@media (max-width: 860px) { .contact-grid { grid-template-columns: 1fr; } }
+
+/* Honeypot field: present in the DOM and in the tab order of nothing (tabindex -1), but invisible to
+   sighted users and ignored by screen readers (aria-hidden). A human never fills it in; a bot that
+   blindly fills every input trips core.forms.ContactForm.clean_website(). */
+.hp-field { position: absolute !important; left: -9999px !important; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+
+.faq { border-radius: var(--r-lg); border: 1px solid var(--line); background: var(--surface); overflow: hidden; }
+.faq details { border-bottom: 1px solid var(--line); } .faq details:last-child { border-bottom: 0; }
+.faq summary { padding: 1.1rem 1.3rem; font-weight: 700; cursor: pointer; list-style: none; display: flex; justify-content: space-between; gap: 1rem; align-items: center; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: '+'; font-weight: 400; font-size: 1.3rem; color: var(--accent); transition: transform .25s; }
+.faq details[open] summary::after { transform: rotate(45deg); }
+.faq .faq-body { padding: 0 1.3rem 1.2rem; color: var(--muted); margin: 0; }
+
+.soon-pill { display: inline-flex; align-items: center; gap: .4rem; font-size: .72rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; padding: .3rem .7rem; border-radius: 99px; background: rgba(var(--accent-rgb), .18); color: var(--accent); }

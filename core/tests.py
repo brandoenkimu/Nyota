@@ -32,11 +32,15 @@ class ArtTests(TestCase):
 
 
 class MembersOnlyTests(TestCase):
-    def test_visitor_is_sent_to_login(self):
-        for path in ('/', '/products/', '/shops/', '/cart/', '/checkout/', '/p/anything/'):
-            r = self.client.get(path)
-            self.assertEqual(r.status_code, 302, path)
-            self.assertIn('/login/', r['Location'])
+    def test_visitor_can_view_public_landing_page(self):
+        response = self.client.get('/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_visitor_is_sent_to_login_for_protected_pages(self):
+        for path in ('/products/', '/shops/', '/cart/', '/checkout/', '/p/anything/'):
+            response = self.client.get(path)
+            self.assertEqual(response.status_code, 302, path)
+            self.assertIn('/login/', response['Location'])
 
     def test_login_signup_and_reset_stay_open(self):
         for path in ('/login/', '/seller/login/', '/staff/login/', '/signup/', '/seller/signup/', '/password/reset/'):

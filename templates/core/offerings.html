@@ -1,0 +1,41 @@
+{% extends 'base.html' %}{% load static nyota %}
+{% block title %}Products & services{% endblock %}
+{% block description %}What's sold on {{ COMPANY_NAME }} and what sellers get: shops, categories, payments, delivery tracking, chat, analytics and payroll.{% endblock %}
+{% block css %}{{ block.super }}<link rel="stylesheet" href="{% static 'css/landing.css' %}">{% endblock %}
+{% block content %}
+<div class="ny-container page-head" style="max-width:1040px">
+  <span class="sec-kicker">What's here</span><h1>Products & services</h1>
+  <p class="lead text-muted" style="max-width:680px">{{ COMPANY_NAME }} is two things in one: a marketplace for
+    shoppers, and a full set of running-a-shop tools for sellers. Create a free account to browse the live
+    catalog &mdash; here's what you'll find.</p>
+
+  {% if categories %}
+  <section class="section" style="padding-top:1.4rem">
+    <div class="sec-head"><div><span class="sec-kicker">For shoppers</span><h2>Categories on the marketplace</h2></div></div>
+    <div class="rail-wrap"><div class="rail" style="overflow:visible;flex-wrap:wrap">
+      {% for c in categories %}<span class="cat-chip"><span class="ci">{% category_icon c.slug %}</span>{{ c.name }}</span>{% endfor %}
+    </div></div>
+  </section>
+  {% endif %}
+
+  <section class="section">
+    <div class="sec-head"><div><span class="sec-kicker">For sellers</span><h2>What a shop on Nyota gets</h2></div></div>
+    <div class="feat-grid">
+      <div class="feat-card"><div class="feat-ico">{% icon 'store' %}</div><h3>Your own shop page</h3><p>A branded storefront with its own map, hours, reviews and products &mdash; not just a listing.</p></div>
+      <div class="feat-card"><div class="feat-ico">{% icon 'users' %}</div><h3>Team accounts</h3><p>Add staff with their own logins and permissions, instead of sharing one password.</p></div>
+      <div class="feat-card"><div class="feat-ico">{% icon 'wallet' %}</div><h3>Payouts & payroll</h3><p>Track commission, request payouts, and run payroll for your team with downloadable payslips.</p></div>
+      <div class="feat-card"><div class="feat-ico">{% icon 'trending' %}</div><h3>Real analytics</h3><p>Sales trends, customer segments and demand forecasts built from your own shop's data.</p></div>
+      <div class="feat-card"><div class="feat-ico">{% icon 'tag' %}</div><h3>Ads & featuring</h3><p>Promote products or get featured on the homepage to reach more shoppers.</p></div>
+      <div class="feat-card"><div class="feat-ico">{% icon 'headset' %}</div><h3>Support when you need it</h3><p>A verification team and support desk, not just an FAQ page.</p></div>
+    </div>
+  </section>
+
+  <div class="cta-band mt-2">
+    <h3 class="mb-2">Ready to get started?</h3>
+    <div class="d-flex flex-wrap gap-2 mt-2">
+      <a href="{% url 'accounts:signup' %}" class="btn btn-ny">Shop on Nyota {% icon 'arrow-right' %}</a>
+      <a href="{% url 'accounts:seller_signup' %}" class="btn" style="border:1px solid var(--line-strong);color:var(--text)">Sell on Nyota</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,6 +1,6 @@
 {% extends 'portal/base.html' %}{% load nyota %}
 {% block portal %}
-<div class="page-actions"><button class="btn btn-soft btn-sm" onclick="window.print()">Print</button></div>
+<div class="page-actions"><button class="btn btn-soft btn-sm" onclick="window.print()">Print</button><a class="btn btn-soft btn-sm" href="?export=pdf">{% icon 'download' %} Download PDF</a></div>
 <div class="glass p-4 p-md-5" style="max-width:720px"><div class="d-flex justify-content-between flex-wrap gap-2"><div><h4 class="mb-0">Payslip · {{ slip.run.label }}</h4><div class="text-muted small">{{ slip.user.display_name }} · {{ slip.grade_name }} · {{ slip.category_name }}</div></div><div class="text-end small text-muted">{% if slip.run.shop %}{{ slip.run.shop.name }}{% else %}{{ COMPANY_NAME }}{% endif %}</div></div>
 <hr><div class="small text-muted mb-3">Worked {{ slip.days_present }} of {{ slip.days_expected }} days · {{ slip.hours }} hours{% if slip.overtime_hours %} · {{ slip.overtime_hours }} overtime{% endif %}{% if slip.days_late %} · {{ slip.days_late }} late{% endif %}</div>
 <table class="tbl"><tbody>

@@ -4,6 +4,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 
 from accounts.forms import BootstrapMixin
+from ads.models import Promotion, PromotionPlan, PromotionStatus
 from catalog.models import Category, Product
 from core.models import HeroSlide
 from orders.models import Coupon, Payout
@@ -115,6 +116,22 @@ class SlideForm(BootstrapMixin, forms.ModelForm):
     class Meta:
         model = HeroSlide
         fields = ['kicker', 'title', 'subtitle', 'cta_label', 'cta_url', 'art_variant', 'sort', 'active']
+
+
+class FeatureShopForm(BootstrapMixin, forms.Form):
+    """An administrator or the CEO featuring a shop on the home page for free — a reward, not a sale."""
+    shop = forms.ModelChoiceField(queryset=Shop.objects.filter(status='active').order_by('name'),
+                                  help_text='Only active shops can be featured.')
+    plan = forms.ModelChoiceField(queryset=PromotionPlan.objects.order_by('sort', 'days'), label='Duration',
+                                  help_text='Picks how many days the shop stays featured — no charge is made.')
+    note = forms.CharField(required=False, widget=forms.Textarea(attrs={'rows': 2}),
+                           help_text='Optional — shown only in the audit log, e.g. "Seller of the month".')
+
+    def clean_shop(self):
+        shop = self.cleaned_data['shop']
+        if Promotion.objects.filter(shop=shop, status=PromotionStatus.PENDING_PAYMENT).exists():
+            raise forms.ValidationError('This shop already has an advertising purchase waiting for payment.')
+        return shop
 
 
 class ShopAdminForm(BootstrapMixin, forms.ModelForm):

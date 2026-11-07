@@ -1,0 +1,102 @@
+{% extends 'base.html' %}{% load static nyota %}
+{% block title %}Every shop is a star{% endblock %}
+{% block description %}{{ COMPANY_NAME }} is a multi-vendor marketplace: independent shops, live order tracking, built-in chat, and M-Pesa, card or cash on delivery -- all in one place.{% endblock %}
+{% block css %}{{ block.super }}<link rel="stylesheet" href="{% static 'css/landing.css' %}">{% endblock %}
+
+{% block content %}
+<div class="ticker"><div class="ticker-track">
+  {% for i in '12'|make_list %}<span>A marketplace of independent shops</span><span>Live order tracking on the map</span><span>Chat with sellers in real time</span><span>M-Pesa, card or cash on delivery</span><span>The Nyota app is on its way</span><span>Open your own shop in minutes</span>{% endfor %}
+</div></div>
+
+<div class="ny-container">
+
+  <section class="hero" aria-label="Welcome">
+    <div class="hero-slide on">
+      <div class="hero-art">{% hero_art 0 %}</div><div class="hero-orb"></div>
+      <div class="hero-copy">
+        <span class="kicker">Multi-vendor marketplace</span>
+        <h1>Every shop is a star.</h1>
+        <p class="lead">{{ COMPANY_NAME }} brings independent sellers and shoppers onto one platform: each shop
+          gets its own branded page and team, each order is tracked live from packed to delivered, and every
+          chat, payment and review happens right here &mdash; no account needed just to see what it's about.</p>
+        <div class="d-flex flex-wrap gap-2">
+          <a href="{% url 'accounts:signup' %}" class="btn btn-ny btn-lg">Create a free account {% icon 'arrow-right' %}</a>
+          <a href="{% url 'accounts:login' %}" class="btn btn-lg" style="border:1px solid var(--line-strong);color:var(--text)">Sign in</a>
+        </div>
+        <p class="text-muted mt-3 mb-0" style="font-size:.9rem">Selling instead? <a href="{% url 'accounts:seller_signup' %}">Open a shop</a> &middot; <a href="{% url 'accounts:seller_login' %}">Seller sign in</a></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="stats">
+      <div class="stat"><b data-count="{{ stat_shops }}">{{ stat_shops }}</b><span>Active shops</span></div>
+      <div class="stat"><b data-count="{{ stat_products }}">{{ stat_products }}</b><span>Products listed</span></div>
+      <div class="stat"><b data-count="{{ stat_orders }}">{{ stat_orders }}</b><span>Orders placed</span></div>
+      <div class="stat"><b>24/7</b><span>Order tracking</span></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="sec-head"><div><span class="sec-kicker">What you get</span><h2>One platform, everything handled</h2></div>
+      <a class="sec-link" href="{% url 'core:offerings' %}">Products & services {% icon 'arrow-right' %}</a></div>
+    <div class="feat-grid">
+      <div class="feat-card"><div class="feat-ico">{% icon 'store' %}</div><h3>Independent shops</h3><p>Every seller runs their own branded storefront, with its own team logins, hours and policies.</p></div>
+      <div class="feat-card"><div class="feat-ico">{% icon 'map' %}</div><h3>Live order tracking</h3><p>Follow a parcel from packed to delivered on a map, with a dated status timeline anyone can check.</p></div>
+      <div class="feat-card"><div class="feat-ico">{% icon 'chat' %}</div><h3>Built-in chat</h3><p>Message a seller directly, before or after you buy &mdash; no phone number or outside app needed.</p></div>
+      <div class="feat-card"><div class="feat-ico">{% icon 'wallet' %}</div><h3>Pay your way</h3><p>M-Pesa, card or cash on delivery, with instant confirmation and a clear order history.</p></div>
+      <div class="feat-card"><div class="feat-ico">{% icon 'trending' %}</div><h3>Seller analytics & payroll</h3><p>Sellers get real sales analytics, forecasts and built-in payroll for their team &mdash; not spreadsheets.</p></div>
+      <div class="feat-card"><div class="feat-ico">{% icon 'shield' %}</div><h3>Verified & secure</h3><p>Seller verification, audited admin actions and encrypted sessions keep the marketplace honest.</p></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="sec-head"><div><span class="sec-kicker">The experience</span><h2>Built for real local shops</h2></div></div>
+    <div class="photo-grid">
+      <div class="photo-card"><img src="https://images.unsplash.com/photo-1556740758-90de374c12ad?w=800&q=80&auto=format&fit=crop" alt="Shopping online" loading="lazy" onerror="this.closest('.photo-card').classList.add('img-fallback')"><span class="photo-cap">Shop like a market, online</span></div>
+      <div class="photo-card"><img src="https://images.unsplash.com/photo-1601924994987-69e26d50dc26?w=800&q=80&auto=format&fit=crop" alt="Parcel delivery" loading="lazy" onerror="this.closest('.photo-card').classList.add('img-fallback')"><span class="photo-cap">Tracked from shop to door</span></div>
+      <div class="photo-card"><img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&q=80&auto=format&fit=crop" alt="Seller packing products" loading="lazy" onerror="this.closest('.photo-card').classList.add('img-fallback')"><span class="photo-cap">Sellers run their own shop</span></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="sec-head"><div><span class="sec-kicker">Three steps</span><h2>How it works</h2></div></div>
+    <div class="steps3">
+      <div><h4>Discover</h4><p class="text-muted mb-0">Browse shops and products once you're in, or chat with a seller about what you need.</p></div>
+      <div><h4>Buy securely</h4><p class="text-muted mb-0">Pay with M-Pesa, card or cash on delivery &mdash; confirmed instantly, recorded for both sides.</p></div>
+      <div><h4>Track & review</h4><p class="text-muted mb-0">Watch your order move in real time, then leave a review the seller can reply to.</p></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="cta-band">
+      <span class="soon-pill">{% icon 'star' 14 %} Coming soon</span>
+      <h2 class="mt-3 mb-2">The Nyota app is on its way</h2>
+      <p class="lead mb-0" style="max-width:640px">We're building native apps for faster browsing, push notifications on your order status, and chat that works offline. The links below will go live the moment they're published &mdash; for now, the full site works great in your mobile browser.</p>
+      <div class="store-badges">
+        {% if app_links.play_store_url %}
+        <a class="store-badge" href="{{ app_links.play_store_url }}" target="_blank" rel="noopener">{% icon 'download' %}<span><small>Get it on</small><b>Google Play</b></span></a>
+        {% else %}
+        <span class="store-badge disabled" aria-disabled="true">{% icon 'download' %}<span><small>Coming soon to</small><b>Google Play</b></span></span>
+        {% endif %}
+        {% if app_links.app_store_url %}
+        <a class="store-badge" href="{{ app_links.app_store_url }}" target="_blank" rel="noopener">{% icon 'download' %}<span><small>Download on the</small><b>App Store</b></span></a>
+        {% else %}
+        <span class="store-badge disabled" aria-disabled="true">{% icon 'download' %}<span><small>Coming soon to the</small><b>App Store</b></span></span>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  <section class="section mb-4">
+    <div class="rail-wrap"><div class="rail" style="overflow:visible;flex-wrap:wrap">
+      <a class="cat-chip" href="{% url 'core:about' %}"><span class="ci">{% icon 'smile' %}</span>About us</a>
+      <a class="cat-chip" href="{% url 'core:offerings' %}"><span class="ci">{% icon 'box' %}</span>Products & services</a>
+      <a class="cat-chip" href="{% url 'core:support' %}"><span class="ci">{% icon 'headset' %}</span>Support</a>
+      <a class="cat-chip" href="{% url 'core:contact' %}"><span class="ci">{% icon 'mail' %}</span>Contact us</a>
+      <a class="cat-chip" href="{% url 'core:terms' %}"><span class="ci">{% icon 'file' %}</span>Terms & conditions</a>
+    </div></div>
+  </section>
+
+</div>
+{% endblock %}

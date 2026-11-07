@@ -3,6 +3,13 @@ node_modules/
 dist/
 build/
 *.tsbuildinfo
+venv/
+.venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
 
 # Secrets: never commit these (the .example files are safe and ARE committed)
 .env
@@ -32,19 +39,6 @@ db.sqlite3
 .env
 
 private_media/
-
-# Python generated files
-__pycache__/
-*.py[cod]
 *.egg-info/
-.pytest_cache/
 .coverage
 htmlcov/
-
-# Virtual environments
-venv/
-.venv/
-env/
-
-# Downloaded vendor assets
-static/vendor/

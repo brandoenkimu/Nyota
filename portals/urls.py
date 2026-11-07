@@ -40,6 +40,7 @@ urlpatterns = [
     path('seller/team/new/', sel.staff_new, name='seller_staff_new'),
     path('seller/team/<int:pk>/toggle/', sel.staff_toggle, name='seller_staff_toggle'),
     path('seller/attendance/', sel.attendance, name='seller_attendance'),
+    path('seller/attendance/report/', sel.attendance_report, name='seller_attendance_report'),
     path('seller/profile/', sel.shop_profile, name='seller_profile'),
 
     # ---- administrator
@@ -67,7 +68,9 @@ urlpatterns = [
     path('staff/admin/payouts/<int:pk>/', adm.payout_action, name='admin_payout_action'),
     path('staff/admin/payments/', adm.payments, name='admin_payments'),
     path('staff/admin/platform-fees/', adm.platform_fees, name='admin_platform_fees'),
+    path('staff/admin/feature-shop/', adm.feature_shop, name='admin_feature_shop'),
     path('staff/admin/attendance/', adm.attendance, name='admin_attendance'),
+    path('staff/admin/attendance/report/', adm.attendance_report, name='admin_attendance_report'),
     path('staff/admin/audit/', adm.audit, name='admin_audit'),
 
     # ---- seller verification
