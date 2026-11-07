@@ -67,7 +67,7 @@ def error_detail(request, pk):
         elif action == 'note':
             g.resolution_note = note
         g.save()
-        record('system.error_updated', target=g, request=request, action=action)
+        record('system.error_updated', target=g, request=request, error_action=action)
         messages.success(request, 'Saved.')
         return redirect('portals:error_detail', pk=pk)
     events = list(g.events.select_related('user')[:30])
