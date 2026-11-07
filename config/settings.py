@@ -129,7 +129,7 @@ TEMPLATES = [{
 
 # -------------------------------------------------------------- database
 DATABASES = {'default': dj_database_url.config(
-    default=f'sqlite:///{BASE_DIR / "db.sqlite3"}', conn_max_age=600)}
+    default=f'sqlite:///{BASE_DIR / "db.sqlite3"}', conn_max_age=int(env('DB_CONN_MAX_AGE', '600')))}
 IS_POSTGRES = 'postgresql' in DATABASES['default'].get('ENGINE', '')
 if IS_POSTGRES:
     INSTALLED_APPS.insert(INSTALLED_APPS.index('django.contrib.humanize') + 1, 'django.contrib.postgres')
@@ -152,6 +152,18 @@ else:
 # Celery: without Redis, tasks simply run inline (eagerly), so nothing extra to start in development.
 CELERY_BROKER_URL = REDIS_URL or 'memory://'
 CELERY_RESULT_BACKEND = REDIS_URL or 'cache+memory://'
+
+# Verify TLS certificates for secure Redis connections.
+import ssl
+
+if REDIS_URL.startswith('rediss://'):
+    CELERY_BROKER_USE_SSL = {
+        'ssl_cert_reqs': ssl.CERT_REQUIRED,
+    }
+    CELERY_REDIS_BACKEND_USE_SSL = {
+        'ssl_cert_reqs': ssl.CERT_REQUIRED,
+    }
+
 CELERY_TASK_ALWAYS_EAGER = not REDIS_URL
 CELERY_TASK_EAGER_PROPAGATES = False
 CELERY_TIMEZONE = 'Africa/Nairobi'
@@ -189,7 +201,7 @@ SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'          # sent on normal navigation, never on a cross-site form/image/script
 SESSION_SAVE_EVERY_REQUEST = True        # a session an admin force-ends (or a lockout) takes effect on the next click
 CSRF_COOKIE_SAMESITE = 'Lax'
-CSRF_COOKIE_HTTPONLY = False             # the client JS that reads the CSRF cookie for AJAX needs this — it's not secret
+CSRF_COOKIE_HTTPONLY = False             # the client JS that reads the CSRF cookie for AJAX needs this â€” it's not secret
 
 # Social sign-in (customers only). Leave blank to hide the button.
 OAUTH = {
@@ -228,7 +240,9 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 STORAGES = {
     'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
-    'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage'},
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+    },
 }
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
 DATA_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
@@ -262,11 +276,16 @@ REST_FRAMEWORK = {
 # --------------------------------------------------------------- security
 if not DEBUG:
     SECURE_SSL_REDIRECT = env_bool('SECURE_SSL_REDIRECT', True)
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-    SECURE_HSTS_SECONDS = 60 * 60 * 24 * 30
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
+    SESSION_COOKIE_SECURE = env_bool('SESSION_COOKIE_SECURE', True)
+    CSRF_COOKIE_SECURE = env_bool('CSRF_COOKIE_SECURE', True)
+
+    # Enable HSTS gradually after HTTPS has been verified.
+    SECURE_HSTS_SECONDS = int(env('SECURE_HSTS_SECONDS', '0'))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = env_bool(
+        'SECURE_HSTS_INCLUDE_SUBDOMAINS', False
+    )
+    SECURE_HSTS_PRELOAD = env_bool('SECURE_HSTS_PRELOAD', False)
+
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'

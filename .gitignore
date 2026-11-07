@@ -42,3 +42,6 @@ private_media/
 *.egg-info/
 .coverage
 htmlcov/
+
+# Local database backups
+database_backups/
