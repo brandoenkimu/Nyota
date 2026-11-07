@@ -7,8 +7,11 @@ POLICY_VERSION = '2026-10'
 
 
 def private_storage():
-    """Verification documents live OUTSIDE the public media folder; they are only served through a
-    permission-checked view."""
+    """Use private Supabase storage when enabled; otherwise use local storage."""
+    if settings.USE_SUPABASE_STORAGE:
+        from config.storage_backends import SupabasePrivateVerificationStorage
+        return SupabasePrivateVerificationStorage()
+
     return FileSystemStorage(location=str(settings.PRIVATE_MEDIA_ROOT))
 
 

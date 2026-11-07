@@ -14,3 +14,5 @@ requests>=2.32
 stripe>=10.0
 tzdata
 reportlab>=4.2       # pure-Python PDF generation for downloadable reports/payslips (no system libraries needed)
+django-storages[s3]>=1.14.6
+boto3>=1.43.126,<1.44

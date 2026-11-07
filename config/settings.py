@@ -11,6 +11,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / '.env')
 
 
+
 def env(name, default=''):
     return os.environ.get(name, default)
 
@@ -22,6 +23,29 @@ def env_bool(name, default=False):
 def env_list(name, default=''):
     return [x.strip() for x in env(name, default).split(',') if x.strip()]
 
+
+USE_SUPABASE_STORAGE = env_bool('USE_SUPABASE_STORAGE', False)
+
+SUPABASE_S3_ACCESS_KEY_ID = env('SUPABASE_S3_ACCESS_KEY_ID')
+SUPABASE_S3_SECRET_ACCESS_KEY = env('SUPABASE_S3_SECRET_ACCESS_KEY')
+
+if USE_SUPABASE_STORAGE and not all([
+    SUPABASE_S3_ACCESS_KEY_ID,
+    SUPABASE_S3_SECRET_ACCESS_KEY,
+]):
+    raise RuntimeError('Supabase S3 credentials are required when storage is enabled.')
+
+AWS_ACCESS_KEY_ID = SUPABASE_S3_ACCESS_KEY_ID
+AWS_SECRET_ACCESS_KEY = SUPABASE_S3_SECRET_ACCESS_KEY
+AWS_S3_ENDPOINT_URL = env(
+    'SUPABASE_S3_ENDPOINT_URL',
+    'https://itkxnaqsbtumbpenzbdb.storage.supabase.co/storage/v1/s3',
+)
+AWS_S3_REGION_NAME = env('SUPABASE_S3_REGION_NAME', 'eu-west-2')
+AWS_S3_SIGNATURE_VERSION = 's3v4'
+AWS_S3_ADDRESSING_STYLE = 'path'
+AWS_DEFAULT_ACL = None
+AWS_S3_FILE_OVERWRITE = False
 
 DEBUG = env_bool('DEBUG', True)
 SECRET_KEY = env('SECRET_KEY', '')
@@ -239,7 +263,13 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 STORAGES = {
-    'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+    'default': {
+        'BACKEND': (
+            'config.storage_backends.SupabasePublicMediaStorage'
+            if USE_SUPABASE_STORAGE
+            else 'django.core.files.storage.FileSystemStorage'
+        ),
+    },
     'staticfiles': {
         'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
     },
