@@ -1,7 +1,4 @@
-services:
-  # The site itself. Serves HTTP and the live-chat WebSocket from the same ASGI process (Daphne) --
-  # this needs a host that keeps a process running, which is why this is Render, not a serverless
-  # platform like Vercel (see the deployment guide).
+﻿services:
   - type: web
     name: nyota
     runtime: python
@@ -10,17 +7,12 @@ services:
     envVars:
       - { key: DEBUG, value: "False" }
       - { key: SECRET_KEY, generateValue: true }
-      # Uses the Render-managed PostgreSQL database declared below.
-      - { key: DATABASE_URL, fromDatabase: { name: nyota-db, property: connectionString } }
+      # Supabase PostgreSQL connection will be configured privately in Render.
+      - { key: DATABASE_URL, sync: false }
       - { key: SITE_URL, sync: false }
       - { key: ALLOWED_HOSTS, sync: false }
       - { key: CSRF_TRUSTED_ORIGINS, sync: false }
-      # Optional: configure when Redis-backed background jobs are deployed.
       - { key: REDIS_URL, sync: false }
       - { key: COMPANY_NAME, sync: false }
       - { key: COMPANY_DOMAIN, sync: false }
       - { key: MEMBERS_ONLY, value: "True" }
-
-databases:
-  - name: nyota-db
-    plan: free
