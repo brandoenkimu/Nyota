@@ -8,11 +8,18 @@
    contributes to the box's real height -- fine for a short slide caption, but it silently clipped
    these buttons off the bottom (overflow:hidden) whenever the effective viewport got narrower, which
    includes browser zoom-in (zooming in shrinks the effective CSS-pixel width, wrapping the lead text
-   onto more lines). hero-static puts this one hero back in normal document flow so its height always
-   follows its content, and nothing can ever be clipped again. */
-.hero.hero-static { overflow: visible; min-height: 0; }
+   onto more lines). hero-static puts the slide back in normal document flow so .hero's height always
+   follows its content -- which also means overflow can stay hidden (nothing exceeds the box anymore),
+   keeping the rounded corners that clip the background art into shape, instead of letting that art
+   bleed past the curve into a flat-looking rectangle. A soft lifted shadow adds some depth so the
+   panel doesn't read as a flat block against the page. */
+.hero.hero-static { min-height: 0; box-shadow: 0 34px 70px -28px rgba(var(--accent-rgb), .4), var(--shadow); }
 .hero.hero-static .hero-slide { position: relative; inset: auto; opacity: 1; visibility: visible; display: block; padding-block: clamp(2.2rem, 6vw, 3.6rem) clamp(2.6rem, 7vw, 4.2rem); }
 .hero.hero-static .hero-art { position: absolute; inset: 0; z-index: -1; }
+/* Keep the entrance animation strictly top-to-bottom: the default rules only stagger children 2-4,
+   so the 5th child (the "Selling instead?" line) rose in at the same time as the 4th (the buttons)
+   and could briefly sit on top of it mid-animation. */
+.hero.hero-static .hero-copy > *:nth-child(5) { animation-delay: .4s; }
 
 .feat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.1rem; }
 .feat-card { padding: 1.5rem; border-radius: var(--r-lg); background: var(--surface); border: 1px solid var(--line); transition: transform .35s var(--ease), border-color .3s, box-shadow .35s; }
