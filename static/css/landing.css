@@ -2,6 +2,18 @@
    reusing the same design tokens (--accent, --surface, --line, --r-lg...) so these pages feel like
    part of Nyota, not a bolted-on brochure site. */
 
+/* The landing hero holds one static panel -- headline, lead, two CTA buttons and a secondary line --
+   more copy than the home-page slide carousel .hero/.hero-slide were built for. By default .hero's
+   height is just its min-height clamp, because every .hero-slide is position:absolute and never
+   contributes to the box's real height -- fine for a short slide caption, but it silently clipped
+   these buttons off the bottom (overflow:hidden) whenever the effective viewport got narrower, which
+   includes browser zoom-in (zooming in shrinks the effective CSS-pixel width, wrapping the lead text
+   onto more lines). hero-static puts this one hero back in normal document flow so its height always
+   follows its content, and nothing can ever be clipped again. */
+.hero.hero-static { overflow: visible; min-height: 0; }
+.hero.hero-static .hero-slide { position: relative; inset: auto; opacity: 1; visibility: visible; display: block; padding-block: clamp(2.2rem, 6vw, 3.6rem) clamp(2.6rem, 7vw, 4.2rem); }
+.hero.hero-static .hero-art { position: absolute; inset: 0; z-index: -1; }
+
 .feat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.1rem; }
 .feat-card { padding: 1.5rem; border-radius: var(--r-lg); background: var(--surface); border: 1px solid var(--line); transition: transform .35s var(--ease), border-color .3s, box-shadow .35s; }
 .feat-card:hover { transform: translateY(-5px); border-color: var(--accent); box-shadow: 0 22px 44px -22px rgba(var(--accent-rgb), .55); }
